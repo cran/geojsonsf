@@ -13,14 +13,17 @@ Rcpp::CharacterVector sfg_attributes(std::string geom_type) {
 }
 
 double get_lon(const Value& coord_array) {
+	validate_point(coord_array[0]);
   return coord_array[0].GetDouble();
 }
 
 double get_lat(const Value& coord_array) {
+	validate_point(coord_array[1]);
   return coord_array[1].GetDouble();
 }
 
 Rcpp::NumericVector parse_point(const Value& coord_array, Rcpp::NumericVector& bbox) {
+	validate_points(coord_array);
   Rcpp::NumericVector point(2);
   point[0] = get_lon(coord_array);
   point[1] = get_lat(coord_array);

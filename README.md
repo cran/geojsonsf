@@ -12,23 +12,29 @@ Status](https://travis-ci.org/SymbolixAU/geojsonsf.svg?branch=master)](https://t
 [![Coverage
 Status](https://codecov.io/github/SymbolixAU/geojsonsf/coverage.svg?branch=master)](https://codecov.io/github/SymbolixAU/geojsonsf?branch=master)
 
-geojsonsf
----------
+## geojsonsf
 
-**v0.2**
+A simple, low-dependency and **fast** converter between GeoJSON and
+Simple Feature objects in R.
 
-Converts GeoJSON ([RFC 7946
-specification)](https://tools.ietf.org/html/rfc7946#page-11) to
+-----
 
--   `sf` and `sfc` objects
--   Well-Known Text
+**v1.0**
 
-As per RFC 7946, foreign members are ignored, and nested objects and
-arrays inside the `properties` object are converted to
-string/characters.
+Converts
 
-Installation
-------------
+  - GeoJSON –\> `sf`
+  - GeoJSON –\> `sfc`
+  - `sf` –\> GeoJSON
+  - `sfc` –\> GeoJSON
+  - GeoJSON –\> Well-known text
+
+As per GeoJSON ([RFC 7946
+specification)](https://tools.ietf.org/html/rfc7946#page-11), foreign
+members are ignored, and nested objects and arrays inside the
+`properties` object are converted to string/characters.
+
+## Installation
 
 When released on CRAN you install it in the usual way
 
@@ -43,18 +49,14 @@ Install the development version from GitHub with
 devtools::install_github("SymbolixAU/geojsonsf")
 ```
 
-Motivation
-----------
+## Motivation
 
-To quickly parse GeoJSON to `sf` objects, and to handle cases not
-supported by `sf`, e.g. arrays of geometries
+To quickly parse between GeoJSON and `sf` objects, and to handle cases
+not supported by `sf`, e.g. arrays of geometries
 
-### Array of geometries
+### Arrays of GeoJSON
 
 ``` r
-library(geojsonsf)
-library(sf)        ## for sf print methods
-#  Linking to GEOS 3.6.1, GDAL 2.1.3, proj.4 4.9.3
 
 js <- '[
 {
@@ -62,17 +64,17 @@ js <- '[
   "features": [
   {
     "type": "Feature",
-    "properties": null,
+    "properties": {"id":1,"val":true},
     "geometry": {"type": "Point", "coordinates": [100.0, 0.0]}
   },
   {
     "type": "Feature",
-    "properties": null,
+    "properties": {"id":2,"val":false},
     "geometry": {"type": "LineString", "coordinates": [[201.0, 0.0], [102.0, 1.0]]}
   },
   {
     "type": "Feature",
-        "properties": null,
+        "properties": {"id":3},
         "geometry": {"type": "LineString", "coordinates": [[301.0, 0.0], [102.0, 1.0]]}
     }
  ]
@@ -82,49 +84,176 @@ js <- '[
     "features": [
     {
       "type": "Feature",
-      "properties": null,
+      "properties": {"id":1},
       "geometry": {"type": "Point", "coordinates": [100.0, 0.0]}
     },
     {
       "type": "Feature",
-      "properties": null,
+      "properties": {"val":false},
       "geometry": {"type": "LineString", "coordinates": [[501.0, 0.0], [102.0, 1.0]]}
     },
     {
       "type": "Feature",
-      "properties": null,
+      "properties": {"hello":"world"},
       "geometry": {"type": "LineString", "coordinates": [[601.0, 0.0], [102.0, 1.0]]}
     }
   ]
 }
 ]'
 
-geojson_sf(js)
-#  Simple feature collection with 6 features and 0 fields
+sf <- geojson_sf(js)
+sf
+#  Simple feature collection with 6 features and 3 fields
 #  geometry type:  GEOMETRY
 #  dimension:      XY
 #  bbox:           xmin: 100 ymin: 0 xmax: 601 ymax: 1
 #  epsg (SRID):    4326
 #  proj4string:    +proj=longlat +datum=WGS84 +no_defs
-#                     geometry
-#  1             POINT (100 0)
-#  2 LINESTRING (201 0, 102 1)
-#  3 LINESTRING (301 0, 102 1)
-#  4             POINT (100 0)
-#  5 LINESTRING (501 0, 102 1)
-#  6 LINESTRING (601 0, 102 1)
+#                     geometry hello id  val
+#  1             POINT (100 0)  <NA>  1    1
+#  2 LINESTRING (201 0, 102 1)  <NA>  2    0
+#  3 LINESTRING (301 0, 102 1)  <NA>  3 <NA>
+#  4             POINT (100 0)  <NA>  1 <NA>
+#  5 LINESTRING (501 0, 102 1)  <NA> NA    0
+#  6 LINESTRING (601 0, 102 1) world NA <NA>
+```
+
+And back again to GeoJSON
+
+``` r
+js <- sf_geojson(sf)
+jsonlite::prettify(js)
+#  {
+#      "type": "FeatureCollection",
+#      "features": [
+#          {
+#              "type": "Feature",
+#              "properties": {
+#                  "hello": null,
+#                  "id": 1,
+#                  "val": "1"
+#              },
+#              "geometry": {
+#                  "type": "Point",
+#                  "coordinates": [
+#                      100,
+#                      0
+#                  ]
+#              }
+#          },
+#          {
+#              "type": "Feature",
+#              "properties": {
+#                  "hello": null,
+#                  "id": 2,
+#                  "val": "0"
+#              },
+#              "geometry": {
+#                  "type": "LineString",
+#                  "coordinates": [
+#                      [
+#                          201,
+#                          0
+#                      ],
+#                      [
+#                          102,
+#                          1
+#                      ]
+#                  ]
+#              }
+#          },
+#          {
+#              "type": "Feature",
+#              "properties": {
+#                  "hello": null,
+#                  "id": 3,
+#                  "val": null
+#              },
+#              "geometry": {
+#                  "type": "LineString",
+#                  "coordinates": [
+#                      [
+#                          301,
+#                          0
+#                      ],
+#                      [
+#                          102,
+#                          1
+#                      ]
+#                  ]
+#              }
+#          },
+#          {
+#              "type": "Feature",
+#              "properties": {
+#                  "hello": null,
+#                  "id": 1,
+#                  "val": null
+#              },
+#              "geometry": {
+#                  "type": "Point",
+#                  "coordinates": [
+#                      100,
+#                      0
+#                  ]
+#              }
+#          },
+#          {
+#              "type": "Feature",
+#              "properties": {
+#                  "hello": null,
+#                  "id": null,
+#                  "val": "0"
+#              },
+#              "geometry": {
+#                  "type": "LineString",
+#                  "coordinates": [
+#                      [
+#                          501,
+#                          0
+#                      ],
+#                      [
+#                          102,
+#                          1
+#                      ]
+#                  ]
+#              }
+#          },
+#          {
+#              "type": "Feature",
+#              "properties": {
+#                  "hello": "world",
+#                  "id": null,
+#                  "val": null
+#              },
+#              "geometry": {
+#                  "type": "LineString",
+#                  "coordinates": [
+#                      [
+#                          601,
+#                          0
+#                      ],
+#                      [
+#                          102,
+#                          1
+#                      ]
+#                  ]
+#              }
+#          }
+#      ]
+#  }
+#  
 ```
 
 ### Speed
 
-This benchmark shows a comparison with `library(sf)` for converting
-GeoJSON of 3,221 counties in the US in to an `sf` object
+This benchmark shows a comparison with `library(sf)` for converting a
+string of GeoJSON of 3,221 counties in the US in to an `sf`
+object
 
 ``` r
-library(RCurl)
-#  Loading required package: bitops
 myurl <- "http://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_050_00_500k.json"
-geo <- readLines(url(myurl))
+geo <- readLines(myurl)
 geo <- paste0(geo, collapse = "")
 
 library(microbenchmark)
@@ -139,12 +268,32 @@ microbenchmark(
     times = 2
 )
 #  Unit: milliseconds
-#        expr       min        lq      mean    median        uq       max
-#   geojsonsf  508.6597  508.6597  595.6057  595.6057  682.5516  682.5516
-#          sf 4142.9372 4142.9372 4220.3404 4220.3404 4297.7436 4297.7436
-#   neval
-#       2
-#       2
+#        expr      min       lq      mean    median        uq       max neval
+#   geojsonsf  681.376  681.376  718.0487  718.0487  754.7214  754.7214     2
+#          sf 1814.307 1814.307 1816.5013 1816.5013 1818.6955 1818.6955     2
+```
+
+Reading directly from a URL is comparable between the
+two
+
+``` r
+myurl <- "http://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_050_00_500k.json"
+
+library(microbenchmark)
+
+microbenchmark(
+    geojsonsf = {
+        geojson_sf(myurl)
+    },
+    sf = {
+        sf::st_read(myurl, quiet = T)
+    },
+    times = 2
+)
+#  Unit: seconds
+#        expr      min       lq     mean   median       uq      max neval
+#   geojsonsf 6.617584 6.617584 6.680125 6.680125 6.742666 6.742666     2
+#          sf 6.914326 6.914326 7.672934 7.672934 8.431542 8.431542     2
 ```
 
     library(rgdal)
@@ -154,16 +303,15 @@ microbenchmark(
         },
         geojsonsf = {
             myurl <- "http://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_050_00_500k.json"
-            geo <- readLines(url(myurl))
+            geo <- readLines(myurl)
             geo <- paste0(geo, collapse = "")
             geojson_sf(geo)
         },
         times = 5
     )
-    # Unit: seconds
-    #      expr       min        lq      mean    median        uq       max neval
-    #      gdal 101.35865 104.05475 109.58369 110.44524 115.57287 116.48696     5
-    # geojsonsf  21.74936  27.25304  26.79775  27.41131  27.68181  29.89324     5
+    #      expr      min       lq     mean   median       uq      max neval
+    #      gdal 58.51037 60.05683 66.33925 65.07506 72.08371 75.97028     5
+    # geojsonsf 11.91515 13.37422 14.02232 13.88782 14.61826 16.31612     5
 
 A visual check to see both objects are the same
 
@@ -180,164 +328,8 @@ google_map() %>%
 <img src="./man/figures/GeoJSONSF.png" width="100%" />
 
 ``` r
-sf <- st_read(geo, quiet = T)
+sf <- sf::st_read(geo, quiet = T)
 plot(st_geometry(sf[!sf$STATE %in% c("02", "15", "72"), ]))
 ```
 
-<img src="man/figures/README-unnamed-chunk-7-1.png" width="100%" />
-
-Examples
---------
-
-Here are more examples of parsing various GeoJSON geometries.
-
-### Geometry
-
-``` r
-g <- '{"type": "Point", "coordinates": [100.0, 0.0]}'
-geojson_sf(g)
-#  Simple feature collection with 1 feature and 0 fields
-#  geometry type:  POINT
-#  dimension:      XY
-#  bbox:           xmin: 100 ymin: 0 xmax: 100 ymax: 0
-#  epsg (SRID):    4326
-#  proj4string:    +proj=longlat +datum=WGS84 +no_defs
-#         geometry
-#  1 POINT (100 0)
-```
-
-### Feature
-
-``` r
-f <- '{
-    "type": "Feature",
-    "properties": null,
-    "geometry": {
-      "type": "LineString", 
-      "coordinates": [[101.0, 0.0], [102.0, 1.0]]
-      }
-    }'
-geojson_sf(f)
-#  Simple feature collection with 1 feature and 0 fields
-#  geometry type:  LINESTRING
-#  dimension:      XY
-#  bbox:           xmin: 101 ymin: 0 xmax: 102 ymax: 1
-#  epsg (SRID):    4326
-#  proj4string:    +proj=longlat +datum=WGS84 +no_defs
-#                     geometry
-#  1 LINESTRING (101 0, 102 1)
-```
-
-Geometry Collection
--------------------
-
-``` r
-gc <- '{
-  "type": "GeometryCollection",
-  "geometries": [
-    {"type": "Point", "coordinates": [100.0, 0.0]},
-    {"type": "LineString", "coordinates": [[101.0, 0.0], [102.0, 1.0]]},
-    {"type" : "MultiPoint", "coordinates" : [[0,0], [1,1], [2,2]]}
-  ]
-}'
-geojson_sf(gc)
-#  Simple feature collection with 1 feature and 0 fields
-#  geometry type:  GEOMETRY
-#  dimension:      XY
-#  bbox:           xmin: 0 ymin: 0 xmax: 102 ymax: 2
-#  epsg (SRID):    4326
-#  proj4string:    +proj=longlat +datum=WGS84 +no_defs
-#                          geometry
-#  1 GEOMETRYCOLLECTION (POINT (...
-```
-
-### Feature Collection
-
-``` r
-fc <- '{
-  "type": "FeatureCollection",
-  "features": [
-  {
-    "type": "Feature",
-    "properties": {"foo" : "feature 1.1", "bar" : "feature 1.2"},
-    "geometry": {"type": "Point", "coordinates": [100.0, 0.0]}
-  },
-  {
-    "type": "Feature",
-    "properties": null,
-    "geometry": {"type": "LineString", "coordinates": [[101.0, 0.0], [102.0, 1.0]]}
-  },
-  {
-    "type": "Feature",
-        "properties": {"foo" : "feature 3.1", "bar" : "feature 3.2"},
-        "geometry": {"type": "LineString", "coordinates": [[101.0, 0.0], [102.0, 1.0]]}
-    }
- ]
-}'
-geojson_sf(fc)
-#  Simple feature collection with 3 features and 2 fields
-#  geometry type:  GEOMETRY
-#  dimension:      XY
-#  bbox:           xmin: 100 ymin: 0 xmax: 102 ymax: 1
-#  epsg (SRID):    4326
-#  proj4string:    +proj=longlat +datum=WGS84 +no_defs
-#            bar         foo                  geometry
-#  1 feature 1.2 feature 1.1             POINT (100 0)
-#  2        <NA>        <NA> LINESTRING (101 0, 102 1)
-#  3 feature 3.2 feature 3.1 LINESTRING (101 0, 102 1)
-```
-
-Reading from file (using `geojsonio` data)
-
-``` r
-library(sf) ## for print methods
-file <- system.file("examples", "california.geojson", package = "geojsonio")
-
-geo <- paste0(readLines(file), collapse = "")
-geojsonsf::geojson_sf(geo)
-#  Simple feature collection with 1 feature and 11 fields
-#  geometry type:  MULTIPOLYGON
-#  dimension:      XY
-#  bbox:           xmin: -124.4096 ymin: 32.53416 xmax: -114.1315 ymax: 42.00952
-#  epsg (SRID):    4326
-#  proj4string:    +proj=longlat +datum=WGS84 +no_defs
-#    abbreviation   area    capital        city
-#  1           CA 423968 Sacramento Los Angeles
-#                          geometry     group houseseats landarea       name
-#  1 MULTIPOLYGON (((-120.2485 3... US States         53   403466 California
-#    population  statehood waterarea
-#  1   38332521 1850-09-09     20502
-```
-
-Well-known Text
----------------
-
-It also converts GeoJSON to Well-Known Text and returns a `data.frame`
-
-``` r
-fc <- '{
-  "type": "FeatureCollection",
-  "features": [
-  {
-    "type": "Feature",
-    "properties": {"foo" : "feature 1.1", "bar" : "feature 1.2"},
-    "geometry": {"type": "Point", "coordinates": [100.0, 0.0]}
-  },
-  {
-    "type": "Feature",
-    "properties": null,
-    "geometry": {"type": "LineString", "coordinates": [[101.0, 0.0], [102.0, 1.0]]}
-  },
-  {
-    "type": "Feature",
-        "properties": {"foo" : "feature 3.1", "bar" : "feature 3.2"},
-        "geometry": {"type": "LineString", "coordinates": [[101.0, 0.0], [102.0, 1.0]]}
-    }
- ]
-}'
-geojson_wkt(fc)
-#            bar         foo                  geometry
-#  1 feature 1.2 feature 1.1             POINT (100 0)
-#  2        <NA>        <NA> LINESTRING (101 0, 102 1)
-#  3 feature 3.2 feature 3.1 LINESTRING (101 0, 102 1)
-```
+<img src="man/figures/README-unnamed-chunk-9-1.png" width="100%" />

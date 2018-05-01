@@ -5,13 +5,6 @@
 #include <Rcpp.h>
 using namespace Rcpp;
 
-
-template <int RTYPE>
-Rcpp::CharacterVector sfcClass(Vector<RTYPE> v);
-
-Rcpp::CharacterVector getSfcClass(SEXP sfc);
-
-
 void fetch_geometries(Rcpp::List& sf, Rcpp::List& res, int& sfg_counter);
 
 void calculate_bbox(Rcpp::NumericVector& bbox, Rcpp::NumericVector& point);
@@ -21,7 +14,8 @@ std::string attach_class(Rcpp::List& sfc, std::string geom_type,
 
 void attach_sfc_attributes(Rcpp::List& sfc, std::string& type,
                            Rcpp::NumericVector& bbox,
-                           std::set< std::string >& geometry_types);
+                           std::set< std::string >& geometry_types,
+                           int& nempty);
 
 Rcpp::NumericVector start_bbox();
 
@@ -35,6 +29,7 @@ Rcpp::StringVector start_sfc_classes(size_t collectionCount);
 Rcpp::List construct_sfc(int& sfg_objects,
                          Rcpp::List& sfc,
                          Rcpp::NumericVector& bbox,
-                         std::set< std::string >& geometry_types);
+                         std::set< std::string >& geometry_types,
+                         int& nempty);
 
 #endif

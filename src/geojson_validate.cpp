@@ -1,5 +1,6 @@
 
 #include "rapidjson/document.h"
+#include <string.h>
 
 #include <Rcpp.h>
 using namespace Rcpp;
@@ -36,8 +37,11 @@ void validate_array(const Value& v, int& sfg_objects) {
 
 
 void validate_type(const Value& v, int& sfg_objects) {
-  if (v.HasMember("type") == FALSE) {
+  if (v.HasMember("type") == FALSE ) {
     geojson_object_error("type", sfg_objects);
+  }
+  if (v["type"].IsNull()) {
+  	geojson_object_error("type", sfg_objects);
   }
 }
 
@@ -76,3 +80,19 @@ void validate_coordinates(const Value& v, int& sfg_objects) {
     geojson_object_error("coordinates", sfg_objects);
   }
 }
+
+void validate_points(const Value& v) {
+	if (v.Size() != 2) {
+		geojson_object_error("lon/lat");
+	}
+}
+
+void validate_point(const Value& v) {
+	// TODO(move to header):
+	static const char* ARRAY_TYPES[] =
+		{ "Null", "False", "True", "Object", "Array", "String", "Number" };
+	if( strncmp(ARRAY_TYPES[v.GetType()], "Num", 3) != 0) {
+		geojson_object_error("lon/lat");
+	}
+}
+
