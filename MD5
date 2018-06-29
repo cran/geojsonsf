@@ -1,17 +1,17 @@
-ed979aefe7d59fd582c18f9ef58788ba *DESCRIPTION
+6a03a03d93c20596c3afa98707b143d9 *DESCRIPTION
 da125b0bace9fbdf823e200c30d91c93 *NAMESPACE
-8eb4d6dde8f5b4393caad163f1639ca7 *NEWS.md
+b0e3cbe04400abf703b928863aa0cbb1 *NEWS.md
 a668f3db546b21dd960b87269c243b11 *R/RcppExports.R
 ef9d119325c062bf9fa39ddd776c24b7 *R/geojson_sf.R
 c20330984374762af6c654ff0abd01a9 *R/geojson_wkt.R
 1f9b1dab84174bbd7c1a1952d9ad5263 *R/geojsonsf-package.R
 d41d8cd98f00b204e9800998ecf8427e *R/scratch.R
 ae1486a40bca62b0056dc93ce03301bf *README.md
-0a74b186186f102b4ed9b8a2707e53b0 *build/vignette.rds
+25fba98ac2e98510ec33b1d2db45e20c *build/vignette.rds
 5d6619fa84293229468c11d82fe102d4 *data/geo_melbourne.rda
 87f0177fd04c1ea26649d17f6aec1645 *inst/doc/geojson-sf-conversions.R
 4124cd3269d71192c7e9d77a02703673 *inst/doc/geojson-sf-conversions.Rmd
-08148a5799838057baca8a19b0167326 *inst/doc/geojson-sf-conversions.html
+44cb74e19593d681b6b205479c88d0fa *inst/doc/geojson-sf-conversions.html
 04f982179b3a69e0afbe48abcd327888 *inst/examples/geo_melbourne.geojson
 57a1e9843ef04c7380e1b58bf2ccf2d3 *inst/include/geojson_properties.h
 9595c0edea05894af60bef6940845aaa *inst/include/geojson_sfc.h
@@ -44,7 +44,7 @@ dddfdcdf4df97189e4876ba8a17eaae9 *src/geojson_to_wkt.cpp
 5a697fe8433e7d3e4f91b0bba1d5269d *src/geojson_validate.cpp
 357832bf99fdaeae9b0f4b887f2b8f02 *src/geojson_wkt.cpp
 afee74828b897996322d43bb6d050df5 *src/read_geojson.cpp
-a188387f78a47b4ae9a08836877f97ae *src/sf_geojson.cpp
+664831bf2137dc39bcdd4aeecaa43dea *src/sf_geojson.cpp
 caae3a6e34ab1b63a621b00cc7afa33c *tests/testthat.R
 01faa5b18a678343e9e28e48d671b615 *tests/testthat/test-errors.R
 7f6e659fafc1d5aa7af70ae008f254ee *tests/testthat/test-geojson_mix.R
@@ -57,5 +57,5 @@ cbe7a06c19853a7761cfc6ca7112dd77 *tests/testthat/test-geometry_objects.R
 5ae0bc9193c61bbbac8202e73cffab6e *tests/testthat/test-geometrycollection.R
 93796f8fa5ac9e7aa540065e0bde7081 *tests/testthat/test-null_geometries.R
 68f6ed3df9dfc279b546644c58314b86 *tests/testthat/test-read_geojson.R
-b4c7cbad45e572120b225031c22c8043 *tests/testthat/test-sf_geojson.R
+914b67a5ee2a2981516bb30fa0ee305e *tests/testthat/test-sf_geojson.R
 4124cd3269d71192c7e9d77a02703673 *vignettes/geojson-sf-conversions.Rmd
