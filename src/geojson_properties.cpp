@@ -18,13 +18,13 @@ void vector_to_string(Rcpp::List& lst, std::string& key) {
 
 
 
-void get_property_types(const Value& v, std::map< std::string, std::string>& property_types) {
+void get_property_types(const Value& v, std::unordered_map< std::string, std::string>& property_types) {
 
 	// TODO: move to a header??
 	static const char* ARRAY_TYPES[] =
 		{ "Null", "False", "True", "Object", "Array", "String", "Number" };
 
-  for (Value::ConstMemberIterator iter = v.MemberBegin(); iter != v.MemberEnd(); ++iter){
+  for (Value::ConstMemberIterator iter = v.MemberBegin(); iter != v.MemberEnd(); ++iter) {
     std::string property = iter->name.GetString();
 
     std::string type = ARRAY_TYPES[iter->value.GetType()];
@@ -53,12 +53,33 @@ void get_property_types(const Value& v, std::map< std::string, std::string>& pro
 }
 
 
+void sort_property_names( Rcpp::List& properties, std::unordered_set< std::string >& property_keys) {
 
+	properties.names() = property_keys;
+	std::vector< std::string > n = properties.names();
+	std::reverse( n.begin(), n.end() );
+	std::vector< std::string > sv( n.size() );
+	unsigned int i;
 
-void get_property_keys(const Value& v, std::set< std::string >& property_keys) {
-  for (Value::ConstMemberIterator iter = v.MemberBegin(); iter != v.MemberEnd(); ++iter){
-  property_keys.insert(iter->name.GetString());
+	for( i = 0; i < n.size(); i++ ) {
+		sv[i] = n[i];
+	}
+	properties.names() = sv;
+
+}
+
+void get_property_keys(const Value& v, std::unordered_set< std::string >& property_keys) {
+
+  for ( Value::ConstMemberIterator iter = v.MemberBegin(); iter != v.MemberEnd(); ++iter ) {
+
+//   	std::string s = iter->name.GetString();
+//   	Rcpp::Rcout << s << std::endl;
+
+    property_keys.insert(iter->name.GetString());
   }
+//   for ( auto it = property_keys.begin(); it != property_keys.end(); it++ ) {
+//   	Rcpp::Rcout << (*it) << std::endl;
+//   }
 }
 
 void update_string_vector(Rcpp::List& sf, std::string& key, const std::string& value, const int& row_index) {

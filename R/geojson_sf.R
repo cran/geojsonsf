@@ -19,8 +19,14 @@
 #'
 #' ## load 'sf' for print methods
 #' # library(sf)
-#' geojson <- '{ "type" : "Point", "coordinates" : [0, 0] }'
+#' geojson <- '{ "type":"Point","coordinates":[0,0] }'
 #' geojson_sfc(geojson)
+#'
+#' geojson <- '[
+#'   { "type":"Point","coordinates":[0,0]},
+#'   {"type":"LineString","coordinates":[[0,0],[1,1]]}
+#'   ]'
+#' geojson_sfc( geojson )
 #'
 #'\dontrun{
 #' ## GeoJSON at a url
@@ -31,6 +37,9 @@
 #' @export
 geojson_sfc <- function(geojson, expand_geometries = FALSE) UseMethod("geojson_sfc")
 
+
+#' @export
+geojson_sfc.geojson <- function( geojson, expand_geometries = FALSE) geojson_sfc.character(geojson, expand_geometries)
 
 #' @export
 geojson_sfc.character <- function(geojson, expand_geometries = FALSE) {
@@ -76,6 +85,8 @@ geojson_sfc.default <- function(geojson, expand_geometries = FALSE) rcpp_geojson
 #' @export
 geojson_sf <- function(geojson, expand_geometries = FALSE) UseMethod("geojson_sf")
 
+#' @export
+geojson_sf.geojson <- function( geojson, expand_geometries = FALSE) geojson_sf.character(geojson, expand_geometries)
 
 #' @export
 geojson_sf.character <- function(geojson, expand_geometries = FALSE) {
@@ -102,7 +113,11 @@ geojson_sf.default <- function(geojson, expand_geometries = F) rcpp_geojson_to_s
 #' Converts `sf` objects to GeoJSON
 #'
 #' @param sf simple feature object
-#' @param atomise logical
+#' @param atomise logical indicating if the sf object should be converted into a vector
+#' of GeoJSON objects
+#' @param simplify logical indicating if sf objects without property columns should simplify
+#' (\code{TRUE}) into a vector of GeoJSON, or (\code{FALSE}). If \code{atomise} is TRUE
+#' this argument is ignored.
 #'
 #' @return vector of GeoJSON
 #'
@@ -113,13 +128,26 @@ geojson_sf.default <- function(geojson, expand_geometries = F) rcpp_geojson_to_s
 #' sf$id <- 1:2
 #' sf_geojson(sf)
 #' sf_geojson(sf, atomise = T)
+#'
+#' ls <- st_linestring(rbind(c(0,0),c(1,1),c(2,1)))
+#' mls <- st_multilinestring(list(rbind(c(2,2),c(1,3)), rbind(c(0,0),c(1,1),c(2,1))))
+#' sfc <- st_sfc(ls,mls)
+#' sf <- st_sf(sfc)
+#' sf_geojson( sf )
+#' sf_geojson( sf, simplify = FALSE )
+#'
 #' }
 #'
 #' @export
-sf_geojson <- function(sf, atomise = FALSE) UseMethod("sf_geojson")
+sf_geojson <- function(sf, atomise = FALSE, simplify = TRUE) UseMethod("sf_geojson")
 
 #' @export
-sf_geojson.sf <- function(sf, atomise = FALSE) rcpp_sf_to_geojson(sf, atomise)
+sf_geojson.sf <- function(sf, atomise = FALSE, simplify = TRUE) {
+	sf <- handle_dates( sf )
+	if( atomise | ( ncol( sf ) == 1 & simplify ) ) return( rcpp_sf_to_geojson_atomise( sf ) )
+	return( rcpp_sf_to_geojson( sf ) )
+	# rcpp_sf_to_geojson_old(sf, atomise)
+}
 
 
 #' sfc to GeoJSON
@@ -137,13 +165,24 @@ sf_geojson.sf <- function(sf, atomise = FALSE) rcpp_sf_to_geojson(sf, atomise)
 #' sfc_geojson(sf)
 #' }
 #' @export
-sfc_geojson <- function(sfc) UseMethod("sfc_geojson")
+sfc_geojson <- function( sfc ) UseMethod("sfc_geojson")
 
 #' @export
 sfc_geojson.sfc <- function(sfc) rcpp_sfc_to_geojson(sfc)
 
-sf_geojson.default <- function(sf, atomise = FALSE) stop("Expected an sf object")
+#' @export
+sf_geojson.default <- function(sf, atomise = FALSE, simplify = TRUE) stop("Expected an sf object")
+
+#' @export
 sfc_geojson.default <- function(sfc) stop("Expected an sfc object")
+
+date_columns <- function( sf ) names(which(vapply(sf , function(x) { inherits(x, "Date") | inherits(x, "POSIXct") }, T)))
+
+handle_dates <- function( x ) {
+	dte <- date_columns( x )
+	x[dte] <- lapply(as.data.frame(x)[dte], as.character)
+	return( x )
+}
 
 is_url <- function(geojson) grepl("^https?://", geojson, useBytes=TRUE)
 

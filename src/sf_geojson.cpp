@@ -1,435 +1,280 @@
-#include "geojsonsf.h"
-#include "geojson_wkt.h"
-#include "sf_geojson.h"
-#include "rapidjson/writer.h"
-#include "rapidjson/stringbuffer.h"
 
 #include <Rcpp.h>
-using namespace Rcpp;
+#include "geojsonsf.h"
 
-void get_column_type(Rcpp::List& sf,
-                     Rcpp::StringVector& property_names,
-                     Rcpp::StringVector& column_types) {
+#include "utils/utils.hpp"
+#include "writers/writers.hpp"
+#include "geometrycollection/geometrycollection.hpp"
 
-	for (int i = 0; i < property_names.size(); i++) {
+#include "jsonify/jsonify.hpp"
+#include "jsonify/to_json/dataframe.hpp"
 
-		Rcpp::String col = property_names[i];
-		SEXP vec = sf[col];
+template< typename Writer >
+void write_geometry(Writer& writer, Rcpp::List& sfc, int i) {
 
-		if (Rf_isFactor(vec)) {
-			column_types[i] = "String";
-		} else {
-			switch(TYPEOF(vec)) {
-			case REALSXP:
-				column_types[i] = "Number";
-				break;
-			case INTSXP:
-				column_types[i] = "Number";
-				break;
-			case LGLSXP:
-				column_types[i] = "Logical";
-				break;
-			default: {
-					column_types[i] = "String";
-					break;
-			}
-			}
-		}
-	}
-}
+	SEXP sfg = sfc[ i ];
 
-void begin_geojson_geometry(Rcpp::String& geojson, std::string& geom_type) {
+	std::string geom_type;
+	Rcpp::CharacterVector cls = getSfClass(sfg);
+	geom_type = cls[1];
 
-  geojson += "{\"type\":";
-  if (geom_type == "POINT") {
-    geojson +=  "\"Point\",\"coordinates\":";
-  } else if (geom_type == "MULTIPOINT") {
-    geojson += "\"MultiPoint\",\"coordinates\":[";
-  } else if (geom_type == "LINESTRING") {
-    geojson += "\"LineString\",\"coordinates\":[";
-  } else if (geom_type == "MULTILINESTRING") {
-    geojson += "\"MultiLineString\",\"coordinates\":[[";
-  } else if (geom_type == "POLYGON") {
-    geojson += "\"Polygon\",\"coordinates\":[[";
-  } else if (geom_type == "MULTIPOLYGON") {
-    geojson += "\"MultiPolygon\",\"coordinates\":[[[";
-  } else if (geom_type == "GEOMETRYCOLLECTION") {
-    geojson += "\"GeometryCollection\",\"geometries\":[";
-  }
-}
+	// need to keep track of GEOMETRYCOLLECTIONs so we can correctly close them
+	bool isGeometryCollection = (geom_type == "GEOMETRYCOLLECTION") ? true : false;
 
-void end_geojson_geometry(Rcpp::String& geojson, std::string& geom_type) {
-  if (geom_type == "POINT") {
-    geojson += "}";
-  } else if (geom_type == "MULTIPOINT") {
-    geojson += "]}";
-  } else if (geom_type == "LINESTRING") {
-    geojson += "]}";
-  } else if (geom_type == "MULTILINESTRING") {
-    geojson += "]]}";
-  } else if (geom_type == "POLYGON") {
-    geojson += "]]}";
-  } else if (geom_type == "MULTIPOLYGON") {
-    geojson += "]]]}";
-  } else if (geom_type == "GEOMETRYCOLLECTION") {
-    geojson += "]}";
-  }
-}
+	int sfglength = geojsonsf::utils::get_sexp_length( sfg );
 
-void coord_separator(Rcpp::String& geojson, int i, int n) {
-  if (i < (n - 1) ) {
-    geojson += ",";
-  }
-}
-
-void object_separator(Rcpp::String& geojson, int i, int n) {
-  geojson += ",";
-}
-
-void line_separator_geojson(Rcpp::String& geojson, int i, int n) {
-  if (i < (n - 1) ) {
-    geojson += "],[";
-  }
-}
-
-void polygon_separator_geojson(Rcpp::String& geojson, int i, int n) {
-  if (i < (n - 1) ) {
-    geojson += "]],[[";
-  }
-}
-
-void add_lonlat_to_geojson(Rcpp::String& geojson, Rcpp::NumericVector& points) {
-
-  points.attr("dim") = Dimension(points.size() / 2, 2);
-  Rcpp::NumericMatrix m = as< Rcpp::NumericMatrix >(points);
-
-  for (int i = 0; i < m.nrow(); i++) {
-    geojson += "[";
-    geojson += m(i,0);
-    geojson += ",";
-    geojson += m(i,1);
-    geojson += "]";
-    coord_separator(geojson, i, m.nrow());
-  }
-}
-
-void point_to_geojson(Rcpp::String& geojson, Rcpp::NumericVector& point) {
-  add_lonlat_to_geojson(geojson, point);
-}
-
-void multi_point_to_geojson(Rcpp::String& geojson, Rcpp::NumericVector& points) {
-  add_lonlat_to_geojson(geojson, points);
-}
-
-void line_string_to_geojson(Rcpp::String& geojson, Rcpp::NumericVector& line) {
-  add_lonlat_to_geojson(geojson, line);
-}
-
-void multi_line_string_to_geojson(Rcpp::String& geojson, Rcpp::List& sfg) {
-  for (int i = 0; i < sfg.size(); i++) {
-    Rcpp::NumericVector sfgi = sfg[i];
-    add_lonlat_to_geojson(geojson, sfgi);
-    line_separator_geojson(geojson, i, sfg.size());
-  }
-}
-
-void polygon_to_geojson(Rcpp::String& geojson, Rcpp::List& sfg) {
-  for (int i = 0; i < sfg.size(); i++) {
-    Rcpp::NumericVector sfgi = sfg[i];
-    add_lonlat_to_geojson(geojson, sfgi);
-    line_separator_geojson(geojson, i, sfg.size());
-  }
-}
-
-void multi_polygon_to_geojson(Rcpp::String& geojson, Rcpp::List& sfg) {
-  for (int i = 0; i < sfg.size(); i++) {
-    Rcpp::List sfgi = sfg[i];
-    polygon_to_geojson(geojson, sfgi);
-    polygon_separator_geojson(geojson, i, sfg.size());
-  }
-}
-
-void vector_to_json(Rcpp::StringVector& sv, std::string& this_type, std::string& this_name) {
-	std::string this_value;
-
-	if (this_type == "Number") {
-		for (int j = 0; j < sv.size(); j++) {
-			this_value = sv[j];
-			if(this_value == "NA") {
-				this_value = "null";
-			}
-			sv[j] = "\"" + this_name + "\"" + ":" + this_value;
-		}
-	} else if (this_type == "Logical") {
-    for (int j = 0; j < sv.size(); j++) {
-      this_value = sv[j];
-    	if(this_value == "NA") {
-    		this_value = "null";
-    	}
-	  	transform(this_value.begin(), this_value.end(), this_value.begin(), tolower);
-	  	sv[j] = "\"" + this_name + "\"" + ":" + this_value;
-    }
+	if (sfglength == 0) {
+		writer.Null();
 	} else {
-		for (int j = 0; j < sv.size(); j++) {
-			this_value = sv[j];
-			if (this_value == "NA") {
-				this_value = "null";
-			} else {
-				this_value = "\"" + this_value + "\"";
-			}
-			sv[j] = "\"" + this_name + "\"" + ":" + this_value;
+
+		bool isnull = geojsonsf::utils::is_null_geometry( sfg, geom_type );
+		if ( isnull ) {
+			writer.Null();
+		} else {
+			geojsonsf::writers::begin_geojson_geometry(writer, geom_type);
+			write_geojson(writer, sfg, geom_type, cls );
+
+			geom_type = (isGeometryCollection) ? "GEOMETRYCOLLECTION" : geom_type;
+			geojsonsf::writers::end_geojson_geometry( writer, geom_type );
 		}
 	}
 }
 
-void write_geojson(Rcpp::String& geojson, SEXP sfg,
-                   std::string& geom_type, Rcpp::CharacterVector& cls) {
+template< typename Writer >
+void write_geojson(Writer& writer, SEXP sfg, std::string& geom_type, Rcpp::CharacterVector& cls ) {
 
-	//geometry_json[i] = add_geometry_to_stream(sfg);
-  if (geom_type == "POINT") {
+	if (geom_type == "POINT") {
+		geojsonsf::writers::points_to_geojson( writer, sfg );
 
-    Rcpp::NumericVector point = as<Rcpp::NumericVector>(sfg);
-    point_to_geojson(geojson, point);
+	} else if (geom_type == "MULTIPOINT") {
+		geojsonsf::writers::linestring_to_geojson( writer, sfg );
 
-  } else if (geom_type == "MULTIPOINT") {
+	} else if (geom_type == "LINESTRING") {
+		geojsonsf::writers::linestring_to_geojson( writer, sfg );
 
-    Rcpp::NumericVector multipoint = as<Rcpp::NumericVector>(sfg);
-    multi_point_to_geojson(geojson, multipoint);
-  } else if (geom_type == "LINESTRING") {
+	} else if (geom_type == "MULTILINESTRING") {
+		Rcpp::List multiline = Rcpp::as< Rcpp::List >( sfg );
+		geojsonsf::writers::polygon_to_geojson( writer, multiline );
 
-    Rcpp::NumericVector line = as<Rcpp::NumericVector>(sfg);
-    line_string_to_geojson(geojson, line);
-  } else if (geom_type == "MULTILINESTRING") {
+	} else if (geom_type == "POLYGON") {
+		Rcpp::List polygon = Rcpp::as< Rcpp::List >(sfg);
+		geojsonsf::writers::polygon_to_geojson( writer, polygon );
 
-    Rcpp::List multiline = as<Rcpp::List>(sfg);
-    multi_line_string_to_geojson(geojson, multiline);
-  } else if (geom_type == "POLYGON") {
+	} else if (geom_type == "MULTIPOLYGON") {
+		Rcpp::List multipolygon = Rcpp::as< Rcpp::List >( sfg );
+		geojsonsf::writers::multi_polygon_to_geojson( writer, multipolygon );
 
-    Rcpp::List polygon = as<Rcpp::List>(sfg);
-    polygon_to_geojson(geojson, polygon);
-  } else if (geom_type == "MULTIPOLYGON") {
-
-    Rcpp::List multipolygon = as<Rcpp::List>(sfg);
-    multi_polygon_to_geojson(geojson, multipolygon);
-  } else if (geom_type == "GEOMETRYCOLLECTION") {
-
-    Rcpp::List gc = as<Rcpp::List>(sfg);
-    Rcpp::List sfgi(1);
-    for (int i = 0; i < gc.size(); i++) {
-      sfgi[0] = gc[i];
-      make_gc_type(geojson, sfgi, geom_type, cls);
-      coord_separator(geojson, i, gc.size());
-    }
-  }
+	} else if (geom_type == "GEOMETRYCOLLECTION") {
+		Rcpp::List gc = Rcpp::as< Rcpp::List >( sfg );
+		Rcpp::List sfgi(1);
+		for (int i = 0; i < gc.size(); i++) {
+			sfgi[0] = gc[i];
+			make_gc_type(writer, sfgi, geom_type, cls);
+		}
+	}
 }
 
-void make_gc_type(Rcpp::String& geojson, Rcpp::List& sfg,
+template< typename Writer >
+void make_gc_type(Writer& writer, Rcpp::List& sfg,
                   std::string& geom_type, Rcpp::CharacterVector& cls) {
 
-  for (Rcpp::List::iterator it = sfg.begin(); it != sfg.end(); it++) {
+	bool isnull = false;
 
-    switch( TYPEOF(*it) ) {
-    case VECSXP: {
-      Rcpp::List tmp = as<Rcpp::List>(*it);
-      if (!Rf_isNull(tmp.attr("class"))) {
+	for (Rcpp::List::iterator it = sfg.begin(); it != sfg.end(); it++) {
 
-        cls = tmp.attr("class");
-        // TODO: error handle (there should aways be 3 elements as we're workgin wtih sfg objects)
-        geom_type = cls[1];
-        begin_geojson_geometry(geojson, geom_type);
-        write_geojson(geojson, tmp, geom_type, cls);
-        end_geojson_geometry(geojson, geom_type);
-      } else {
-        make_gc_type(geojson, tmp, geom_type, cls);
-      }
-      break;
-    }
-    case REALSXP: {
-      Rcpp::NumericVector tmp = as<Rcpp::NumericVector>(*it);
-      if (!Rf_isNull(tmp.attr("class"))) {
+		switch( TYPEOF( *it ) ) {
+		case VECSXP: {
+			Rcpp::List tmp = Rcpp::as< Rcpp::List >(*it);
+			if (!Rf_isNull(tmp.attr("class"))) {
 
-        cls = tmp.attr("class");
-        geom_type = cls[1];
-        begin_geojson_geometry(geojson, geom_type);
-        write_geojson(geojson, tmp, geom_type, cls);
-        end_geojson_geometry(geojson, geom_type);
-      }
-      break;
-    }
-    default: {
-      Rcpp::stop("Coordinates could not be found");
-    }
-    }
-  }
-}
+				cls = tmp.attr("class");
+				// TODO: error handle (there should aways be 3 elements as we're workgin wtih sfg objects)
+				geom_type = cls[1];
 
+				SEXP tst = *it;
+				isnull = geojsonsf::utils::is_null_geometry( tst, geom_type );
+				if ( isnull ) {
+					//writer.Null();
+				} else {
+					geojsonsf::writers::begin_geojson_geometry(writer, geom_type);
+					write_geojson(writer, tmp, geom_type, cls);
+					geojsonsf::writers::end_geojson_geometry(writer, geom_type);
+				}
+			} else {
+				make_gc_type(writer, tmp, geom_type, cls);
+			}
+			break;
+		}
+		case REALSXP: {
+			Rcpp::NumericVector tmp = Rcpp::as< Rcpp::NumericVector >( *it );
+			if (!Rf_isNull(tmp.attr("class"))) {
 
-template <int RTYPE>
-int sexp_length(Vector<RTYPE> v) {
-	return v.length();
-}
+				cls = tmp.attr("class");
+				geom_type = cls[1];
 
-int get_sexp_length(SEXP s) {
-	switch( TYPEOF(s) ) {
-	case REALSXP:
-		return sexp_length<REALSXP>(s);
-	case VECSXP:
-		return sexp_length<VECSXP>(s);
-	case INTSXP:
-		return sexp_length<INTSXP>(s);
-	default: Rcpp::stop("unknown sf type");
+				SEXP tst = *it;
+				isnull = geojsonsf::utils::is_null_geometry( tst, geom_type );
+				if ( isnull ) {
+					//writer.Null();
+				} else {
+					geojsonsf::writers::begin_geojson_geometry(writer, geom_type);
+					write_geojson(writer, tmp, geom_type, cls);
+					geojsonsf::writers::end_geojson_geometry(writer, geom_type);
+				}
+			}
+			break;
+		}
+		default: {
+			Rcpp::stop("Coordinates could not be found");
+		}
+		}
 	}
-	return 0;
 }
 
-void write_geometry(SEXP sfg, Rcpp::String& geojson) {
 
-  std::string geom_type;
-  Rcpp::CharacterVector cls = getSfClass(sfg);
-  Rcpp::String g = cls[1];
-  geom_type = g;
+// [[Rcpp::export]]
+Rcpp::StringVector rcpp_sfc_to_geojson( Rcpp::List& sfc ) {
+	// atomise - each row is a separate GeoJSON string
 
-  // need to keep track of GEOMETRYCOLLECTIONs so we can correctly close them
-  bool isGeometryCollection = (geom_type == "GEOMETRYCOLLECTION") ? true : false;
+	size_t n_rows = sfc.size();
+	size_t i;
 
-  int sfglength = get_sexp_length(sfg);
+	Rcpp::StringVector geojson( n_rows );
 
-  if (sfglength == 0) {
-  	geojson += "null";
-  } else {
-  	begin_geojson_geometry(geojson, geom_type);
-  	write_geojson(geojson, sfg, geom_type, cls);
+	for( i = 0; i < n_rows; i++ ) {
 
-  	geom_type = (isGeometryCollection) ? "GEOMETRYCOLLECTION" : geom_type;
-  	end_geojson_geometry(geojson, geom_type);
-  }
-}
+		rapidjson::StringBuffer sb;
+		rapidjson::Writer < rapidjson::StringBuffer > writer( sb );
 
-void geometry_vector_to_geojson(Rcpp::StringVector& geometry_json, Rcpp::List& sfc) {
-
-  SEXP sfg;
-  for (int i = 0; i < sfc.size(); i++) {
-  	Rcpp::String geojson;
-  	sfg = sfc[i];
-  	write_geometry(sfg, geojson);
-  	geometry_json[i] = geojson;
-  }
-}
-
-Rcpp::String matrix_row_to_json(Rcpp::StringMatrix& json_mat, int i) {
-  std::ostringstream os;
-	os << "{";
-  int n = json_mat.ncol();
-  os << "\"type\":\"Feature\",\"properties\":{";
-  for (int j = 0; j < (n-1); j++) {
-    os << json_mat(i, j);
-    coord_separator(os, j, (n-1));
-  }
-  os << "},";
-  os << "\"geometry\":";
-  Rcpp::StringVector this_row;
-  this_row = json_mat(i, (n-1));
-
-  // TODO(change):
-  // this testing step seems over the top. However, a point is different to other geometries
-  // and needs to be initialised size: 2, NA_REAL values
-  // so that library(sf) prints it correctly
-  int test = (this_row[0] == "NA") ? 0 : 1;
-  if ( test == 0 ) {
-  	os << "null";
-  } else {
-  	os << json_mat(i, (n-1));
-  }
-  os << "}";
-
-  Rcpp::String res = os.str();
-  return res;
+		write_geometry( writer, sfc, i );
+		geojson[i] = sb.GetString();
+	}
+  geojson.attr("class") = Rcpp::CharacterVector::create("geojson","json");
+	return geojson;
 }
 
 // [[Rcpp::export]]
-Rcpp::StringVector rcpp_sfc_to_geojson(Rcpp::List sfc) {
-	Rcpp::StringVector geometry_json(sfc.length());
-	geometry_vector_to_geojson(geometry_json, sfc);
-	return geometry_json;
-}
+Rcpp::StringVector rcpp_sf_to_geojson_atomise( Rcpp::DataFrame& sf ) {
 
-// [[Rcpp::export]]
-Rcpp::StringVector rcpp_sf_to_geojson(Rcpp::List sf, bool atomise) {
+	std::string geom_column = sf.attr("sf_column");
 
-	Rcpp::List sf_copy = clone(sf);
+	size_t n_cols = sf.ncol();
+	size_t n_properties = n_cols - 1;
+	size_t n_rows = sf.nrows();
+	size_t i, j;
+	Rcpp::StringVector column_names = sf.names();
+	Rcpp::StringVector property_names(sf.size() - 1);
 
-	Rcpp::StringVector column_types(sf_copy.size() - 1);
-	Rcpp::StringVector property_names(sf_copy.size() - 1);
+	Rcpp::StringVector geojson( n_rows );
 
-	std::string geom_column = sf_copy.attr("sf_column");
-	Rcpp::StringVector col_names = sf_copy.names();
-
-	// fill 'property_names' with all the columns which aren't 'sf_column'
 	int property_counter = 0;
 	for (int i = 0; i < sf.length(); i++) {
-		if (col_names[i] != geom_column) {
-			property_names[property_counter] = col_names[i];
+		if (column_names[i] != geom_column) {
+			property_names[property_counter] = column_names[i];
 			property_counter++;
 		}
 	}
 
-	get_column_type(sf_copy, property_names, column_types);
-	Rcpp::List sfc = sf_copy[geom_column];
 
-	Rcpp::List properties;
+	for( i = 0; i < n_rows; i++ ) {
 
-	Rcpp::StringMatrix json_mat(sfc.length(), col_names.size()); // row x cols
-	std::string this_name;
-	std::string this_type;
-	std::string this_value;
-	Rcpp::StringVector this_vector;
+		rapidjson::StringBuffer sb;
+		rapidjson::Writer < rapidjson::StringBuffer > writer( sb );
 
-	for (int i = 0; i < property_names.length(); i++) {
-		// iterate the list elements
-		this_name = property_names[i];
-		this_type = column_types[i];
-		this_vector = as< Rcpp::StringVector >(sf_copy[this_name]);
-		vector_to_json(this_vector, this_type, this_name);
-		json_mat(_, i) = this_vector;
-	// TODO: what if there's a mssing element?
+		if ( n_properties > 0 ) {
+		  writer.StartObject();
+			geojsonsf::writers::start_features( writer );
+			geojsonsf::writers::start_properties( writer );
+
+			writer.StartObject();
+
+			// properties first, then sfc
+			for( j = 0; j < n_properties; j++ ) {
+				const char *h = property_names[ j ];
+
+				SEXP this_vec = sf[ h ];
+
+				jsonify::writers::write_value( writer, h );
+				jsonify::dataframe::dataframe_cell( writer, this_vec, i );
+			}
+			writer.EndObject();
+		}
+
+		// now geometries
+		if( n_properties > 0 ) {
+		  writer.String("geometry");
+		}
+
+		Rcpp::List sfc = sf[ geom_column ];
+		write_geometry( writer, sfc, i );
+
+		if( n_properties > 0 ) {
+			writer.EndObject();
+		}
+		geojson[i] = sb.GetString();
 	}
 
-	Rcpp::StringVector geometry_json(sfc.length());
-	geometry_vector_to_geojson(geometry_json, sfc);
-	json_mat(_, (json_mat.ncol() - 1) ) = geometry_json;
-	Rcpp::StringVector res(json_mat.nrow());
+	geojson.attr("class") = Rcpp::CharacterVector::create("geojson","json");
+	return geojson;
+}
 
-	// If properties, do this bit. else return a vector (column of matrix)
-  if (json_mat.ncol() > 1) {
-  	for (int i = 0; i < res.length(); i++) {
-      res[i] = matrix_row_to_json(json_mat, i);
-    }
-  } else {
-  	res = json_mat(_, 0);
-  }
+// [[Rcpp::export]]
+Rcpp::StringVector rcpp_sf_to_geojson( Rcpp::DataFrame& sf ) {
+	rapidjson::StringBuffer sb;
+	rapidjson::Writer < rapidjson::StringBuffer > writer( sb );
 
-  if(atomise) {
-  	return res;
-  }
+	std::string geom_column = sf.attr("sf_column");
 
-  if (json_mat.ncol() > 1) {
-  	// it has properties
-  	Rcpp::StringVector fc;
-  	std::ostringstream os;
+	size_t n_cols = sf.ncol();
+	size_t n_properties = n_cols - 1;
+	size_t n_rows = sf.nrows();
+	size_t i, j;
+	Rcpp::StringVector column_names = sf.names();
+	Rcpp::StringVector property_names(sf.size() - 1);
 
-  	// Iff more than one row, it's a feature collection
-  	// else, it's just a feature...
-  	os << "{\"type\":\"FeatureCollection\",\"features\":[";
-  	for (int i = 0; i < res.length(); i++) {
-  		os << res[i];
-  		if (i < (res.length() - 1) ) {
-  			os << ",";
-  		}
-  	}
-  	os << "]}";
-  	fc = os.str();
-  	return fc;
-  }
-  return res;
+	int property_counter = 0;
+	for (int i = 0; i < sf.length(); i++) {
+		if (column_names[i] != geom_column) {
+			property_names[property_counter] = column_names[i];
+			property_counter++;
+		}
+	}
 
+	writer.StartObject();
+	geojsonsf::writers::start_feature_collection( writer );
+
+	writer.StartArray();
+
+	for( i = 0; i < n_rows; i++ ) {
+
+		  writer.StartObject();
+
+			geojsonsf::writers::start_features( writer );
+			geojsonsf::writers::start_properties( writer );
+			writer.StartObject();
+		  // properties first, then sfc
+			for( j = 0; j < n_properties; j++ ) {
+				const char *h = property_names[ j ];
+
+				SEXP this_vec = sf[ h ];
+
+				jsonify::writers::write_value( writer, h );
+				jsonify::dataframe::dataframe_cell( writer, this_vec, i );
+			}
+		  writer.EndObject();
+
+		writer.String("geometry");
+
+		Rcpp::List sfc = sf[ geom_column ];
+		write_geometry( writer, sfc, i );
+
+		writer.EndObject();
+	}
+
+	writer.EndArray();
+	writer.EndObject();
+
+	Rcpp::StringVector geojson = sb.GetString();
+	geojson.attr("class") = Rcpp::CharacterVector::create("geojson","json");
+	return geojson;
 }

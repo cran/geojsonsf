@@ -15,7 +15,7 @@ using namespace Rcpp;
 void parse_geometry_object_wkt(Rcpp::List& sfc,
                            int i,
                            const Value& geometry,
-                           std::set< std::string >& geometry_types,
+                           std::unordered_set< std::string >& geometry_types,
                            int& wkt_objects) {
 
   validate_type(geometry, wkt_objects);
@@ -56,13 +56,17 @@ void parse_geometry_object_wkt(Rcpp::List& sfc,
 
   wkt = os.str();
   transform(geom_type.begin(), geom_type.end(), geom_type.begin(), ::toupper);
-  wkt.attr("class") = sfg_attributes(geom_type);
+
+  // TODO( dimension )
+  std::string dim = "XY";
+
+  wkt.attr("class") = sfg_attributes(dim, geom_type);
   sfc[i] = wkt;
 }
 
 
 Rcpp::List parse_geometry_collection_object_wkt(const Value& val,
-                                            std::set< std::string >& geometry_types,
+                                            std::unordered_set< std::string >& geometry_types,
                                             int& wkt_objects) {
 
   std::string geom_type;
@@ -93,17 +97,20 @@ Rcpp::List parse_geometry_collection_object_wkt(const Value& val,
   os << ")";
 
   geom_collection_wkt = os.str();
-  geom_collection_wkt.attr("class") = sfg_attributes("GEOMETRYCOLLECTION");
+  // TODO( dimension );
+  std::string dim = "XY";
+  std::string attribute = "GEOMETRYCOLLECTION";
+  geom_collection_wkt.attr("class") = sfg_attributes( dim, attribute );
   return geom_collection_wkt;
 }
 
 
 Rcpp::List parse_feature_object_wkt(const Value& feature,
-                                std::set< std::string >& geometry_types,
+                                std::unordered_set< std::string >& geometry_types,
                                 int& wkt_objects,
-                                std::set< std::string >& property_keys,
+                                std::unordered_set< std::string >& property_keys,
                                 Document& doc_properties,
-                                std::map< std::string, std::string>& property_types) {
+                                std::unordered_map< std::string, std::string>& property_types) {
 
   validate_geometry(feature, wkt_objects);
   validate_properties(feature, wkt_objects);
@@ -125,7 +132,9 @@ Rcpp::List parse_feature_object_wkt(const Value& feature,
 
   } else {
   	Rcpp::StringVector wkt = "POINT EMPTY";
-  	wkt.attr("class") = sfg_attributes("POINT");
+  	std::string dim = "XY";
+  	std::string attribute = "POINT";
+  	wkt.attr("class") = sfg_attributes( dim, attribute );
   	sfc[0] = wkt;
   }
 
@@ -148,11 +157,11 @@ Rcpp::List parse_feature_object_wkt(const Value& feature,
 
 
 Rcpp::List parse_feature_collection_object_wkt(const Value& fc,
-                                           std::set< std::string >& geometry_types,
+                                           std::unordered_set< std::string >& geometry_types,
                                            int& wkt_objects,
-                                           std::set< std::string >& property_keys,
+                                           std::unordered_set< std::string >& property_keys,
                                            Document& doc_properties,
-                                           std::map< std::string, std::string>& property_types) {
+                                           std::unordered_map< std::string, std::string>& property_types) {
   // a FeatureCollection MUST have members (arrays) called features,
   validate_features(fc, wkt_objects);
 
@@ -174,11 +183,11 @@ void parse_geojson_wkt(const Value& v,
                        Rcpp::List& sfc,
                        Rcpp::List& properties,
                        int i,
-                       std::set< std::string >& geometry_types,
+                       std::unordered_set< std::string >& geometry_types,
                        int& wkt_objects,
-                       std::set< std::string >& property_keys,
+                       std::unordered_set< std::string >& property_keys,
                        Document& doc_properties,
-                       std::map< std::string, std::string >& property_types
+                       std::unordered_map< std::string, std::string >& property_types
                          ) {
   Rcpp::List res(1);
   validate_type(v, wkt_objects);
@@ -211,11 +220,11 @@ void parse_geojson_wkt(const Value& v,
 void parse_geojson_object_wkt(Document& d,
                               Rcpp::List& sfc,
                               Rcpp::List& properties,
-                              std::set< std::string >& geometry_types,
+                              std::unordered_set< std::string >& geometry_types,
                               int& wkt_objects,
-                              std::set< std::string >& property_keys,
+                              std::unordered_set< std::string >& property_keys,
                               Document& doc_properties,
-                              std::map< std::string, std::string >& property_types
+                              std::unordered_map< std::string, std::string >& property_types
                                 ) {
   const Value& v = d;
   parse_geojson_wkt(v, sfc, properties, 0, geometry_types, wkt_objects, property_keys, doc_properties, property_types);
@@ -225,22 +234,22 @@ void parse_geojson_array_wkt(Document& d,
                              Rcpp::List& sfc,
                              Rcpp::List& properties,
                              int i,
-                             std::set< std::string >& geometry_types,
+                             std::unordered_set< std::string >& geometry_types,
                              int& wkt_objects,
-                             std::set< std::string >& property_keys,
+                             std::unordered_set< std::string >& property_keys,
                              Document& doc_properties,
-                             std::map< std::string, std::string>& property_types
+                             std::unordered_map< std::string, std::string>& property_types
                                ) {
   const Value& v = d[i];
   parse_geojson_wkt(v, sfc, properties, i, geometry_types, wkt_objects, property_keys, doc_properties, property_types);
 }
 
 Rcpp::List geojson_to_wkt(const char* geojson,
-                          std::set< std::string >& geometry_types,
+                          std::unordered_set< std::string >& geometry_types,
                           int& wkt_objects,
-                          std::set< std::string >& property_keys,
+                          std::unordered_set< std::string >& property_keys,
                           Document& doc_properties,
-                          std::map< std::string, std::string >& property_types
+                          std::unordered_map< std::string, std::string >& property_types
                             ) {
 
   Document d;
@@ -272,7 +281,7 @@ Rcpp::List geojson_to_wkt(const char* geojson,
 
 Rcpp::List construct_wkt(int& sfg_objects,
                          Rcpp::List& sf,
-                         std::set< std::string >& geometry_types) {
+                         std::unordered_set< std::string >& geometry_types) {
 
   Rcpp::List sfc_output(sfg_objects);
   std::string geom_attr;
@@ -283,8 +292,8 @@ Rcpp::List construct_wkt(int& sfg_objects,
 }
 
 
-Rcpp::List construct_wkt_df(Rcpp::List& lst, std::set< std::string >& property_keys,
-                        std::map< std::string, std::string>& property_types,
+Rcpp::List construct_wkt_df(Rcpp::List& lst, std::unordered_set< std::string >& property_keys,
+                        std::unordered_map< std::string, std::string>& property_types,
                         Document& doc_properties,
                         int& wkt_objects,
                         int& row_index) {
@@ -293,6 +302,9 @@ Rcpp::List construct_wkt_df(Rcpp::List& lst, std::set< std::string >& property_k
 
   property_keys.insert("geometry");
   properties.names() = property_keys;
+
+  sort_property_names(properties, property_keys);
+
   properties["geometry"] = lst;
 
   setup_property_vectors(property_types, properties, wkt_objects);
@@ -315,9 +327,10 @@ Rcpp::List rcpp_geojson_to_wkt(Rcpp::StringVector geojson) {
   int row_index;
 
   // Attributes to keep track of along the way
-  std::set< std::string > geometry_types = start_geometry_types();
-  std::set< std::string > property_keys;   // storing all the 'key' values from 'properties'
-  std::map< std::string, std::string> property_types;
+  //std::unordered_set< std::string > geometry_types = start_geometry_types();
+  std::unordered_set< std::string > geometry_types;
+  std::unordered_set< std::string > property_keys;   // storing all the 'key' values from 'properties'
+  std::unordered_map< std::string, std::string> property_types;
 
   Document doc_properties;    // Document to store the 'properties'
   doc_properties.SetObject();
