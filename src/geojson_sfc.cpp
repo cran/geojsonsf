@@ -1,6 +1,6 @@
 #include <Rcpp.h>
-#include "geojsonsf.h"
-#include "geojson_sfc.h"
+#include "geojsonsf/geojsonsf.h"
+#include "geojsonsf/geojson_sfc.h"
 
 void calculate_bbox(Rcpp::NumericVector& bbox, Rcpp::NumericVector& point) {
   //xmin, ymin, xmax, ymax
@@ -27,7 +27,7 @@ std::string attach_class(Rcpp::List& sfc,
       Rcpp::StringVector sfc_classes = start_sfc_classes(sfc.size());
       for (int i = 0; i < sfc.size(); i++) {
         SEXP sfci = sfc[i];
-        Rcpp::CharacterVector cls = getSfClass(sfci);
+        Rcpp::CharacterVector cls = geojsonsf::getSfClass(sfci);
         sfc_classes[i] = cls[1];
       }
 

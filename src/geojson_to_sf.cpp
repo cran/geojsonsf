@@ -5,31 +5,12 @@
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
-#include "geojsonsf.h"
-#include "geojson_to_sf.h"
-#include "geojson_sfc.h"
-#include "geojson_sfg.h"
-#include "geojson_validate.h"
-#include "geojson_properties.h"
-
-template <int RTYPE>
-Rcpp::CharacterVector sfClass(Rcpp::Vector<RTYPE> v) {
-	return v.attr("class");
-}
-
-Rcpp::CharacterVector getSfClass(SEXP sf) {
-
-	switch( TYPEOF(sf) ) {
-	case REALSXP:
-		return sfClass<REALSXP>(sf);
-	case VECSXP:
-		return sfClass<VECSXP>(sf);
-	case INTSXP:
-		return sfClass<INTSXP>(sf);
-	default: Rcpp::stop("unknown sf type");
-	}
-	return "";
-}
+#include "geojsonsf/geojsonsf.h"
+#include "geojsonsf/geojson_to_sf.h"
+#include "geojsonsf/geojson_sfc.h"
+#include "geojsonsf/geojson_sfg.h"
+#include "geojsonsf/geojson_validate.h"
+#include "geojsonsf/geojson_properties.h"
 
 void parse_geometry_object(Rcpp::List& sfc,
                            int i,

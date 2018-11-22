@@ -14,20 +14,6 @@ Status](https://codecov.io/github/SymbolixAU/geojsonsf/coverage.svg?branch=maste
 
 –
 
-## Warning Note: 2018-09-22
-
-I have found [an
-issue](https://github.com/SymbolixAU/geojsonsf/issues/32) with `Dates`
-and `POSIXct` columns not being handled correctly.
-
-I have made a fix in the development version and aim to have it on CRAN
-by the end of October 2018.
-
-Before then, to handle `Dates` and `POSIXct` columns correctly you will
-need to convert them to characters first.
-
------
-
 ## geojsonsf
 
 A simple, low-dependency and **fast** converter between GeoJSON and
@@ -35,7 +21,7 @@ Simple Feature objects in R.
 
 -----
 
-**v1.1**
+**v1.2.1**
 
 Converts
 
@@ -44,6 +30,7 @@ Converts
   - `sf` –\> GeoJSON
   - `sfc` –\> GeoJSON
   - GeoJSON –\> Well-known text
+  - data.frame –\> GeoJSON (POINT only)
 
 As per GeoJSON ([RFC 7946
 specification)](https://tools.ietf.org/html/rfc7946#page-11), foreign
@@ -188,8 +175,8 @@ microbenchmark(
 )
 #  Unit: milliseconds
 #        expr       min        lq      mean    median        uq       max
-#   geojsonsf  722.1211  722.1211  742.4202  742.4202  762.7194  762.7194
-#          sf 1798.9366 1798.9366 1871.2442 1871.2442 1943.5517 1943.5517
+#   geojsonsf  709.2268  709.2268  722.0626  722.0626  734.8984  734.8984
+#          sf 1867.6840 1867.6840 1958.7968 1958.7968 2049.9097 2049.9097
 #   neval
 #       2
 #       2
