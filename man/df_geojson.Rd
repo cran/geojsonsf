@@ -5,7 +5,7 @@
 \title{df to GeoJSON}
 \usage{
 df_geojson(df, lon, lat, z = NULL, m = NULL, atomise = FALSE,
-  simplify = TRUE)
+  simplify = TRUE, digits = NULL, factors_as_string = TRUE)
 }
 \arguments{
 \item{df}{data.frame}
@@ -25,6 +25,12 @@ of GeoJSON objects}
 \item{simplify}{logical indicating if data.frame without property columns should simplify
 (\code{TRUE}) into a vector of GeoJSON, or (\code{FALSE}). If \code{atomise} is TRUE
 this argument is ignored.}
+
+\item{digits}{integer specifying the number of decimal places to round numerics.
+numeric values are coorced using \code{as.integer}, which may round-down the value you supply.
+Default is \code{NULL} - no rounding}
+
+\item{factors_as_string}{logical indicating if factors should be treated as strings. Defaults to TRUE.}
 }
 \value{
 vector of GeoJSON

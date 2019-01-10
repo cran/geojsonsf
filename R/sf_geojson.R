@@ -8,6 +8,10 @@
 #' @param simplify logical indicating if sf objects without property columns should simplify
 #' (\code{TRUE}) into a vector of GeoJSON, or return a Featurecollection with
 #' empty property fields (\code{FALSE}). If \code{atomise} is TRUE this argument is ignored.
+#' @param digits integer specifying the number of decimal places to round numerics.
+#' numeric values are coorced using \code{as.integer}, which may round-down the value you supply.
+#' Default is \code{NULL} - no rounding
+#' @param factors_as_string logical indicating if factors should be treated as strings. Defaults to TRUE.
 #'
 #' @return vector of GeoJSON
 #'
@@ -29,21 +33,31 @@
 #' }
 #'
 #' @export
-sf_geojson <- function( sf, atomise = FALSE, simplify = TRUE ) UseMethod("sf_geojson")
-
-#' @export
-sf_geojson.sf <- function( sf, atomise = FALSE, simplify = TRUE ) {
-	sf <- handle_dates( sf )
-	if( atomise | ( ncol( sf ) == 1 & simplify ) ) return( rcpp_sf_to_geojson_atomise( sf ) )
-	return( rcpp_sf_to_geojson( sf ) )
+sf_geojson <- function( sf, atomise = FALSE, simplify = TRUE, digits = NULL, factors_as_string = TRUE ) {
+	UseMethod("sf_geojson")
 }
 
+#' @export
+sf_geojson.sf <- function( sf, atomise = FALSE, simplify = TRUE, digits = NULL, factors_as_string = TRUE ) {
+	sf <- handle_dates( sf )
+	digits <- handle_digits( digits )
+	if( atomise | ( ncol( sf ) == 1 & simplify ) ) return( rcpp_sf_to_geojson_atomise( sf, digits, factors_as_string ) )
+	return( rcpp_sf_to_geojson( sf, digits, factors_as_string ) )
+}
+
+#' @export
+sf_geojson.default <- function( sf, atomise = FALSE, simplify = TRUE, digits = NULL, factors_as_string = TRUE ) {
+	stop("Expected an sf object")
+}
 
 #' sfc to GeoJSON
 #'
 #' Converts `sfc` objects to GeoJSON
 #'
 #' @param sfc simple feature collection object
+#' @param digits integer specifying the number of decimal places to round numeric coordinates.
+#' numeric values are coorced using \code{as.integer}, which may round-down the value you supply.
+#' Default is \code{NULL} - no rounding
 #'
 #' @return vector of GeoJSON
 #'
@@ -54,16 +68,16 @@ sf_geojson.sf <- function( sf, atomise = FALSE, simplify = TRUE ) {
 #' sfc_geojson(sf)
 #' }
 #' @export
-sfc_geojson <- function( sfc ) UseMethod("sfc_geojson")
+sfc_geojson <- function( sfc, digits = NULL )	UseMethod("sfc_geojson")
 
 #' @export
-sfc_geojson.sfc <- function(sfc) rcpp_sfc_to_geojson(sfc)
+sfc_geojson.sfc <- function( sfc, digits = NULL ) {
+	digits <- handle_digits( digits )
+	rcpp_sfc_to_geojson( sfc, digits )
+}
 
 #' @export
-sf_geojson.default <- function(sf, atomise = FALSE, simplify = TRUE) stop("Expected an sf object")
-
-#' @export
-sfc_geojson.default <- function(sfc) stop("Expected an sfc object")
+sfc_geojson.default <- function( sfc, digits = NULL ) stop("Expected an sfc object")
 
 
 #' df to GeoJSON
@@ -81,6 +95,10 @@ sfc_geojson.default <- function(sfc) stop("Expected an sfc object")
 #' @param simplify logical indicating if data.frame without property columns should simplify
 #' (\code{TRUE}) into a vector of GeoJSON, or (\code{FALSE}). If \code{atomise} is TRUE
 #' this argument is ignored.
+#' @param digits integer specifying the number of decimal places to round numerics.
+#' numeric values are coorced using \code{as.integer}, which may round-down the value you supply.
+#' Default is \code{NULL} - no rounding
+#' @param factors_as_string logical indicating if factors should be treated as strings. Defaults to TRUE.
 #'
 #' @return vector of GeoJSON
 #'
@@ -108,17 +126,34 @@ sfc_geojson.default <- function(sfc) stop("Expected an sfc object")
 #' sf <- geojson_sf( geo )
 #'
 #' @export
-df_geojson <- function(df, lon, lat, z = NULL, m = NULL, atomise = FALSE, simplify = TRUE) UseMethod("df_geojson")
+df_geojson <- function(
+	df, lon, lat, z = NULL, m = NULL,
+	atomise = FALSE, simplify = TRUE, digits = NULL,
+	factors_as_string = TRUE
+	) {
+	UseMethod("df_geojson")
+}
 
 #' @export
-df_geojson.data.frame <- function(df, lon, lat, z = NULL, m = NULL, atomise = FALSE, simplify = TRUE) {
+df_geojson.data.frame <- function(
+	df, lon, lat, z = NULL, m = NULL,
+	atomise = FALSE, simplify = TRUE, digits = NULL,
+	factors_as_string = TRUE
+	) {
+
+	digits <- handle_digits( digits )
 	df <- handle_dates( df )
 	lon <- force( lon )
 	lat <- force( lat )
 	z <- force( z )
 	m <- force( m )
+	factors_as_string <- force( factors_as_string )
+
 	if( is.null(z) && !is.null(m)) stop("z must be supplied when using m")
 	geometries <- c(lon, lat, z, m)
-	if( atomise | ( ncol( df ) == length( geometries ) & simplify ) ) return( rcpp_df_to_geojson_atomise( df, geometries ) )
-	return( rcpp_df_to_geojson( df, geometries ) )
+
+	if( atomise | ( ncol( df ) == length( geometries ) & simplify ) ){
+		return( rcpp_df_to_geojson_atomise( df, geometries, digits, factors_as_string ) )
+	}
+	return( rcpp_df_to_geojson( df, geometries, digits, factors_as_string ) )
 }
