@@ -19,12 +19,18 @@ namespace geojson_properties {
 	/*
 	 * Updates a list element to string
 	 */
-	inline void vector_to_string(Rcpp::List& lst, std::string& key) {
+	inline void vector_to_string(
+			Rcpp::List& lst,
+			std::string& key
+		) {
 		Rcpp::StringVector sv = Rcpp::as<Rcpp::StringVector>(lst[key]);
 		lst[key] = sv;
 	}
 
-	inline void get_property_types(const Value& v, std::unordered_map< std::string, std::string>& property_types) {
+	inline void get_property_types(
+			const Value& v,
+			std::unordered_map< std::string, std::string>& property_types
+		) {
 
 		// TODO: move to a header??
 		static const char* ARRAY_TYPES[] =
@@ -59,22 +65,28 @@ namespace geojson_properties {
 	}
 
 
-	inline void sort_property_names( Rcpp::List& properties, std::unordered_set< std::string >& property_keys) {
+	inline void sort_property_names(
+			Rcpp::List& properties,
+			std::unordered_set< std::string >& property_keys
+		) {
 
 		properties.names() = property_keys;
 		std::vector< std::string > n = properties.names();
 		std::reverse( n.begin(), n.end() );
 		std::vector< std::string > sv( n.size() );
-		unsigned int i;
+		R_xlen_t i;
 
-		for( i = 0; i < n.size(); i++ ) {
+		for( i = 0; i < n.size(); ++i ) {
 			sv[i] = n[i];
 		}
 		properties.names() = sv;
 
 	}
 
-	inline void get_property_keys(const Value& v, std::unordered_set< std::string >& property_keys) {
+	inline void get_property_keys(
+			const Value& v,
+			std::unordered_set< std::string >& property_keys
+		) {
 
 		for ( Value::ConstMemberIterator iter = v.MemberBegin(); iter != v.MemberEnd(); ++iter ) {
 
@@ -88,41 +100,65 @@ namespace geojson_properties {
 		//   }
 	}
 
-	inline void update_string_vector(Rcpp::List& sf, std::string& key, const std::string& value, const int& row_index) {
+	inline void update_string_vector(
+			Rcpp::List& sf,
+			std::string& key,
+			const std::string& value,
+			const R_xlen_t& row_index
+		) {
 		Rcpp::StringVector sv = sf[key];
 		sv[row_index] = value;
 		sf[key] = sv;
 	}
 
-	inline void update_logical_vector(Rcpp::List& sf, std::string& key, const bool& value, const int& row_index) {
+	inline void update_logical_vector(
+			Rcpp::List& sf,
+			std::string& key,
+			const bool& value,
+			const R_xlen_t& row_index
+		) {
 		Rcpp::LogicalVector lv = sf[key];
 		lv[row_index] = value;
 		sf[key] = lv;
 	}
 
-	inline void update_numeric_vector(Rcpp::List& sf, std::string& key, double& value, const int& row_index) {
+	inline void update_numeric_vector(
+			Rcpp::List& sf,
+			std::string& key,
+			double& value,
+			const R_xlen_t& row_index
+		) {
 		Rcpp::NumericVector nv = sf[key];
 		nv[row_index] = value;
 		sf[key] = nv;
 	}
 
-	inline Rcpp::NumericVector na_numeric_vector(const size_t& n_elements) {
+	inline Rcpp::NumericVector na_numeric_vector(
+			const R_xlen_t& n_elements
+		) {
 		Rcpp::NumericVector nv(n_elements, NA_REAL);
 		return nv;
 	}
 
-	inline Rcpp::StringVector na_string_vector(const size_t& n_elements) {
+	inline Rcpp::StringVector na_string_vector(
+			const R_xlen_t& n_elements
+		) {
 		Rcpp::StringVector sv(n_elements, Rcpp::StringVector::get_na());
 		return sv;
 	}
 
-	inline Rcpp::LogicalVector na_logical_vector(const size_t& n_elements) {
+	inline Rcpp::LogicalVector na_logical_vector(
+			const R_xlen_t& n_elements
+		) {
 		Rcpp::LogicalVector lv(n_elements, NA_LOGICAL);
 		return lv;
 	}
 
-	inline void setup_property_vectors(std::unordered_map< std::string, std::string>& property_types,
-                                    Rcpp::List& properties, int& sfg_objects) {
+	inline void setup_property_vectors(
+			std::unordered_map< std::string, std::string>& property_types,
+      Rcpp::List& properties,
+      R_xlen_t& sfg_objects
+		) {
 
 		for (auto keys_it = property_types.begin();  keys_it != property_types.end(); keys_it++ ) {
 
@@ -139,11 +175,13 @@ namespace geojson_properties {
 		}
 	}
 
-	inline void nested_json_to_string(rapidjson::Value& v,
-                                   std::string& type,
-                                   Rcpp::List& properties,
-                                   int& row_index,
-                                   std::string& key) {
+	inline void nested_json_to_string(
+			rapidjson::Value& v,
+      std::string& type,
+      Rcpp::List& properties,
+      R_xlen_t& row_index,
+      std::string& key
+		) {
 
 		StringBuffer sb;
 		Writer<StringBuffer> writer(sb);
@@ -159,10 +197,12 @@ namespace geojson_properties {
 		}
 	}
 
-	inline void fill_property_vectors(Document& doc_properties,
-                                   std::unordered_map< std::string, std::string>& property_types,
-                                   Rcpp::List& properties,
-                                   int& row_index) {
+	inline void fill_property_vectors(
+			Document& doc_properties,
+      std::unordered_map< std::string, std::string>& property_types,
+      Rcpp::List& properties,
+      R_xlen_t& row_index
+		) {
 
 		// TODO(move to header):
 		static const char* ARRAY_TYPES[] =

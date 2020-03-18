@@ -4,7 +4,10 @@
 #include "geojsonsf/geojsonsf.h"
 #include "geojsonsf/geojson/writers/writers.hpp"
 #include "geojsonsf/write_geojson.hpp"
-#include "geojsonsf/utils/utils.hpp"
+
+#include "sfheaders/sfheaders.hpp"
+#include "sfheaders/utils/utils.hpp"
+#include "sfheaders/utils/sexp/sexp.hpp"
 
 namespace geojsonsf {
 namespace write_geometry {
@@ -22,18 +25,23 @@ namespace write_geometry {
    * no requriement to keep track of sfg indeces
    */
 	template< typename Writer >
-	inline void write_geometry(Writer& writer, SEXP sfg, Rcpp::CharacterVector& cls, int digits ) {
+	inline void write_geometry(
+			Writer& writer,
+			SEXP sfg,
+			Rcpp::CharacterVector& cls,
+			int digits
+		) {
 
 		std::string geom_type;
 		geom_type = cls[1];
 
-		int sfglength = geojsonsf::utils::get_sexp_length( sfg );
+		int sfglength = sfheaders::utils::get_sexp_length( sfg );
 
 		if (sfglength == 0) {
 			writer.Null();
 		} else {
 
-			bool isnull = geojsonsf::utils::is_null_geometry( sfg, geom_type );
+			bool isnull = sfheaders::utils::is_null_geometry( sfg, geom_type );
 			if ( isnull ) {
 				writer.Null();
 			} else {
@@ -51,25 +59,30 @@ namespace write_geometry {
 	 * the standard function for writing GeoJSON geometries
 	 */
 	template< typename Writer >
-	inline void write_geometry(Writer& writer, Rcpp::List& sfc, int sfg_index, int digits) {
+	inline void write_geometry(
+			Writer& writer,
+			Rcpp::List& sfc,
+			R_xlen_t sfg_index,
+			int digits
+		) {
 
 		SEXP sfg = sfc[ sfg_index ];
 
 		std::string geom_type;
-		Rcpp::CharacterVector cls = geojsonsf::getSfClass(sfg);
+		Rcpp::CharacterVector cls = sfheaders::sfc::getSfClass(sfg);
 		cls_check( cls );
 		geom_type = cls[1];
 
 		// need to keep track of GEOMETRYCOLLECTIONs so we can correctly close them
 		bool isGeometryCollection = (geom_type == "GEOMETRYCOLLECTION") ? true : false;
 
-		int sfglength = geojsonsf::utils::get_sexp_length( sfg );
+		int sfglength = sfheaders::utils::get_sexp_length( sfg );
 
 		if (sfglength == 0) {
 			writer.Null();
 		} else {
 
-			bool isnull = geojsonsf::utils::is_null_geometry( sfg, geom_type );
+			bool isnull = sfheaders::utils::is_null_geometry( sfg, geom_type );
 			if ( isnull ) {
 				writer.Null();
 			} else {
@@ -87,8 +100,15 @@ namespace write_geometry {
 	 * down-casting MULTI* geometries to their simpler form
 	 */
 	template< typename Writer >
-	inline void write_geometry(Writer& writer, Rcpp::List& sfc, int sfg_index, int geometry_index,
-                            std::string& geom_type, Rcpp::CharacterVector& cls, int digits ) {
+	inline void write_geometry(
+			Writer& writer,
+			Rcpp::List& sfc,
+			R_xlen_t sfg_index,
+			R_xlen_t geometry_index,
+			std::string& geom_type,
+			Rcpp::CharacterVector& cls,
+			int digits
+		) {
 
 		SEXP sfg = sfc[ sfg_index ];
 		std::string downcast_geometry;
@@ -106,13 +126,13 @@ namespace write_geometry {
 		// need to keep track of GEOMETRYCOLLECTIONs so we can correctly close them
 		bool isGeometryCollection = (geom_type == "GEOMETRYCOLLECTION") ? true : false;
 
-		int sfglength = geojsonsf::utils::get_sexp_length( sfg );
+		int sfglength = sfheaders::utils::get_sexp_length( sfg );
 
 		if (sfglength == 0) {
 			writer.Null();
 		} else {
 
-			bool isnull = geojsonsf::utils::is_null_geometry( sfg, geom_type );
+			bool isnull = sfheaders::utils::is_null_geometry( sfg, geom_type );
 			if ( isnull ) {
 				writer.Null();
 			} else {

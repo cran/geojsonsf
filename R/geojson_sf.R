@@ -4,6 +4,9 @@
 #'
 #' @param geojson string or vector of GeoJSON, or a URL or file pointing to a geojson file
 #' @param expand_geometries logical indicating whether to unnest GEOMETRYCOLLECTION rows. see details
+#' @param crs coordiante reference system. See Details
+#' @param proj4string proj4string. See Details
+#' @param buffer_size size of buffer used when reading a file from disk. Defaults 1024
 #'
 #' @details
 #' specifying \code{expand_geometries = TRUE} will expand individual \code{GEOMETRYCOLLECTION}
@@ -12,6 +15,15 @@
 #'
 #' The \code{GEOMETRYCOLLECTION} information is not kept when using \code{expand_geometries = TRUE}. Therefore,
 #' it is not possible to reconstruct the \code{GEOMETRYCOLLECTION} after unnesting it.
+#'
+#' Geojson specification RFC7946 \url{https://tools.ietf.org/html/rfc7946#page-12}
+#' says all CRS should be the World Geodetic System 1984 (WGS 84) [WGS84] datum,
+#' with longitude and latitude units of decimal degrees.  This is equivalent to
+#' the coordinate reference system identified by the Open Geospatial Consortium (OGC)
+#' URN urn:ogc:def:crs:OGC::CRS84
+#'
+#' \code{geojson_sfc} and \code{geojson_sf} automatically set the CRS to WGS 84.
+#' The fields \code{crs} and \code{proj4string} let you to overwrite the defaults.
 #'
 #' @examples
 #'
@@ -35,31 +47,77 @@
 #' }
 #'
 #' @export
-geojson_sfc <- function(geojson, expand_geometries = FALSE) UseMethod("geojson_sfc")
+geojson_sfc <- function(
+	geojson,
+	expand_geometries = FALSE,
+	crs = NULL,
+	proj4string = NULL,
+	buffer_size = 1024
+	) {
 
+	sfc <- geojson_to_sfc( geojson, expand_geometries, buffer_size )
+	if( !is.null( crs ) | !is.null( proj4string ) ) {
+		sfc <- set_crs( sfc, crs, proj4string )
+	}
+	return( sfc )
+}
+
+geojson_to_sfc <- function( geojson, expand_geometries, buffer_size ) UseMethod("geojson_to_sfc")
 
 #' @export
-geojson_sfc.geojson <- function( geojson, expand_geometries = FALSE) geojson_sfc.character(geojson, expand_geometries)
+geojson_to_sfc.geojson <- function(
+	geojson,
+	expand_geometries = FALSE,
+	buffer_size
+	) {
+
+	geojson_to_sfc.character(geojson, expand_geometries, buffer_size)
+}
 
 #' @export
-geojson_sfc.character <- function(geojson, expand_geometries = FALSE) {
+geojson_to_sfc.character <- function(
+	geojson,
+	expand_geometries = FALSE,
+	buffer_size
+	) {
 
 	if(length(geojson) > 1) {
 		return(rcpp_geojson_to_sfc(geojson, expand_geometries))
 	}
 	if (is_url(geojson)) {
-		return(geojson_sfc(curl::curl(geojson), expand_geometries))
+
+		return(geojson_to_sfc(curl::curl(geojson), expand_geometries))
+
 	} else if (file.exists(geojson) ) {
-		return(rcpp_read_sfc_file(normalizePath(geojson), expand_geometries))
+		return(
+			rcpp_read_sfc_file(
+			  normalizePath( geojson )
+			  , get_download_mode()
+			  , expand_geometries
+			  , buffer_size
+			  )
+		  )
 	}
 	return(rcpp_geojson_to_sfc(geojson, expand_geometries))
 }
 
 #' @export
-geojson_sfc.connection <- function(geojson, expand_geometries = FALSE) geojson_sfc(read_url(geojson), expand_geometries)
+geojson_to_sfc.connection <- function(
+	geojson,
+	expand_geometries = FALSE,
+	buffer_size
+	) {
+	geojson_sfc(read_url(geojson), expand_geometries)
+}
 
 #' @export
-geojson_sfc.default <- function(geojson, expand_geometries = FALSE) rcpp_geojson_to_sfc(geojson, expand_geometries)
+geojson_to_sfc.default <- function(
+	geojson,
+	expand_geometries = FALSE,
+	buffer_size
+	) {
+	rcpp_geojson_to_sfc(geojson, expand_geometries)
+}
 
 #' Geojson to sf
 #'
@@ -83,38 +141,83 @@ geojson_sfc.default <- function(geojson, expand_geometries = FALSE) rcpp_geojson
 #'
 #' @inherit geojson_sfc params details
 #' @export
-geojson_sf <- function(geojson, expand_geometries = FALSE) UseMethod("geojson_sf")
+geojson_sf <- function(
+	geojson,
+	expand_geometries = FALSE,
+	crs = NULL,
+	proj4string = NULL,
+	buffer_size = 1024
+	) {
+	sf <- geojson_to_sf( geojson, expand_geometries, buffer_size )
+	if( !is.null( crs ) | !is.null( proj4string ) ) {
+		sf[["geometry"]] <- set_crs( sf[["geometry"]], crs, proj4string )
+	}
+	return( sf )
+}
+
+geojson_to_sf <- function( geojson, expand_geometries, buffer_size ) {
+	UseMethod("geojson_to_sf")
+}
 
 #' @export
-geojson_sf.geojson <- function( geojson, expand_geometries = FALSE) geojson_sf.character(geojson, expand_geometries)
+geojson_to_sf.geojson <- function( geojson, expand_geometries = FALSE, buffer_size ) {
+	geojson_to_sf.character(geojson, expand_geometries)
+}
 
 #' @export
-geojson_sf.character <- function(geojson, expand_geometries = FALSE) {
+geojson_to_sf.character <- function(geojson, expand_geometries = FALSE, buffer_size ) {
 
 	if(length(geojson) > 1) {
 		return(rcpp_geojson_to_sf(geojson, expand_geometries))
 	}
 	if (is_url(geojson)) {
-		return(geojson_sf(curl::curl(geojson), expand_geometries))
+
+		return(geojson_to_sf(curl::curl(geojson), expand_geometries))
+
 	} else if (file.exists(geojson) ) {
-		return(rcpp_read_sf_file(normalizePath(geojson), expand_geometries))
+		return(
+			rcpp_read_sf_file(
+				normalizePath( geojson )
+				, get_download_mode()
+				, expand_geometries
+				, buffer_size
+				)
+			)
 	}
-	 return(rcpp_geojson_to_sf(geojson, expand_geometries))
+	 return(rcpp_geojson_to_sf( geojson, expand_geometries ) )
 }
 
 #' @export
-geojson_sf.connection <- function(geojson, expand_geometries = F) geojson_sf(read_url(geojson), expand_geometries)
+geojson_to_sf.connection <- function(geojson, expand_geometries = FALSE, buffer_size ) {
+	geojson_sf(read_url(geojson), expand_geometries)
+}
 
 #' @export
-geojson_sf.numeric <- function(geojson, ... ) stop("Numeric vectors are not valid GeoJSON")
+geojson_to_sf.numeric <- function( geojson, expand_geometries = FALSE, buffer_size ) {
+	stop("Numeric vectors are not valid GeoJSON")
+}
 
 #' @export
-geojson_sf.default <- function(geojson, expand_geometries = F) rcpp_geojson_to_sf(geojson, expand_geometries)
+geojson_to_sf.default <- function(geojson, expand_geometries = FALSE, buffer_size ) {
+	rcpp_geojson_to_sf(geojson, expand_geometries)
+}
 
 
 
+date_columns <- function( sf ) {
+	names(which(vapply(sf , function(x) { inherits(x, "Date") | inherits(x, "POSIXct") }, T)))
+}
 
-date_columns <- function( sf ) names(which(vapply(sf , function(x) { inherits(x, "Date") | inherits(x, "POSIXct") }, T)))
+set_crs <- function(sfc, crs, proj4string ) {
+	crs <- list(
+		epsg = ifelse(is.null(crs),NA_integer_,crs)
+		, proj4string = ifelse(is.null(proj4string),"",proj4string)
+	)
+	attr( crs, "class" ) <- "crs"
+	attr( sfc, "crs" ) <- crs
+	return( sfc )
+}
+
 
 handle_dates <- function( x ) {
 	dte <- date_columns( x )
@@ -134,5 +237,9 @@ read_url <- function(con) {
 	finally = {
 		close(con)
 	})
+}
+
+get_download_mode <- function() {
+	ifelse( .Platform$OS.type == "windows", "r", "rb" )
 }
 

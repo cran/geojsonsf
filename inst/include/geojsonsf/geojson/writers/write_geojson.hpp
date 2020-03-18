@@ -9,7 +9,12 @@ namespace geojsonsf {
 namespace write_geojson {
 
 	template< typename Writer >
-	inline void write_geojson(Writer& writer, SEXP sfg, std::string& geom_type, Rcpp::CharacterVector& cls, int& digits ) {
+	inline void write_geojson(
+			Writer& writer,
+			SEXP sfg,
+			std::string& geom_type,
+			Rcpp::CharacterVector& cls, int& digits
+		) {
 
 		if (geom_type == "POINT") {
 			geojsonsf::writers::points_to_geojson( writer, sfg, digits );
@@ -35,7 +40,9 @@ namespace write_geojson {
 		} else if (geom_type == "GEOMETRYCOLLECTION") {
 			Rcpp::List gc = Rcpp::as< Rcpp::List >( sfg );
 			Rcpp::List sfgi(1);
-			for (int i = 0; i < gc.size(); i++) {
+			R_xlen_t i;
+			R_xlen_t gc_n = gc.size();
+			for ( i = 0; i < gc_n; ++i) {
 				sfgi[0] = gc[i];
 				std::string gc_geom_type;
 				bool isnull = false;
@@ -55,8 +62,14 @@ namespace write_geojson {
 	 * used for down-casting MULTI objects
 	 */
 	template< typename Writer >
-	inline void write_geojson(Writer& writer, SEXP sfg, std::string& geom_type,
-	                          Rcpp::CharacterVector& cls, int geometry_index, int& digits ) {
+	inline void write_geojson(
+			Writer& writer,
+			SEXP sfg,
+			std::string& geom_type,
+			Rcpp::CharacterVector& cls,
+			R_xlen_t geometry_index,
+			int& digits
+		) {
 
 		if (geom_type == "POINT") {
 			geojsonsf::writers::points_to_geojson( writer, sfg, digits );
@@ -86,7 +99,9 @@ namespace write_geojson {
 		} else if (geom_type == "GEOMETRYCOLLECTION") {
 			Rcpp::List gc = Rcpp::as< Rcpp::List >( sfg );
 			Rcpp::List sfgi(1);
-			for (int i = 0; i < gc.size(); i++) {
+			R_xlen_t i;
+			R_xlen_t gc_n = gc.size();
+			for ( i = 0; i < gc_n; ++i ) {
 				sfgi[0] = gc[i];
 
 				std::string gc_geom_type;
