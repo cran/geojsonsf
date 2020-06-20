@@ -4,8 +4,10 @@
 #'
 #' @param geojson string or vector of GeoJSON, or a URL or file pointing to a geojson file
 #' @param expand_geometries logical indicating whether to unnest GEOMETRYCOLLECTION rows. see details
-#' @param crs coordiante reference system. See Details
-#' @param proj4string proj4string. See Details
+#' @param input user input for coordinate reference system object
+#' @param wkt well-known text for coordinate reference system object
+#' @param crs deprecated. coordinate reference system. See Details
+#' @param proj4string deprecated. proj4string. See Details
 #' @param buffer_size size of buffer used when reading a file from disk. Defaults 1024
 #'
 #' @details
@@ -23,7 +25,7 @@
 #' URN urn:ogc:def:crs:OGC::CRS84
 #'
 #' \code{geojson_sfc} and \code{geojson_sf} automatically set the CRS to WGS 84.
-#' The fields \code{crs} and \code{proj4string} let you to overwrite the defaults.
+#' The fields \code{input} and \code{wkt} let you to overwrite the defaults.
 #'
 #' @examples
 #'
@@ -50,15 +52,15 @@
 geojson_sfc <- function(
 	geojson,
 	expand_geometries = FALSE,
+	input = NULL,
+	wkt = NULL,
 	crs = NULL,
 	proj4string = NULL,
 	buffer_size = 1024
 	) {
 
 	sfc <- geojson_to_sfc( geojson, expand_geometries, buffer_size )
-	if( !is.null( crs ) | !is.null( proj4string ) ) {
-		sfc <- set_crs( sfc, crs, proj4string )
-	}
+	sfc <- set_crs( sfc, input, wkt, crs, proj4string )
 	return( sfc )
 }
 
@@ -86,7 +88,7 @@ geojson_to_sfc.character <- function(
 	}
 	if (is_url(geojson)) {
 
-		return(geojson_to_sfc(curl::curl(geojson), expand_geometries))
+		return(geojson_to_sfc(url(geojson), expand_geometries))
 
 	} else if (file.exists(geojson) ) {
 		return(
@@ -144,14 +146,14 @@ geojson_to_sfc.default <- function(
 geojson_sf <- function(
 	geojson,
 	expand_geometries = FALSE,
+	input = NULL,
+	wkt = NULL,
 	crs = NULL,
 	proj4string = NULL,
 	buffer_size = 1024
 	) {
 	sf <- geojson_to_sf( geojson, expand_geometries, buffer_size )
-	if( !is.null( crs ) | !is.null( proj4string ) ) {
-		sf[["geometry"]] <- set_crs( sf[["geometry"]], crs, proj4string )
-	}
+	sf[["geometry"]] <- set_crs( sf[["geometry"]], input, wkt, crs, proj4string )
 	return( sf )
 }
 
@@ -172,7 +174,7 @@ geojson_to_sf.character <- function(geojson, expand_geometries = FALSE, buffer_s
 	}
 	if (is_url(geojson)) {
 
-		return(geojson_to_sf(curl::curl(geojson), expand_geometries))
+		return(geojson_to_sf(url(geojson), expand_geometries))
 
 	} else if (file.exists(geojson) ) {
 		return(
@@ -208,13 +210,32 @@ date_columns <- function( sf ) {
 	names(which(vapply(sf , function(x) { inherits(x, "Date") | inherits(x, "POSIXct") }, T)))
 }
 
-set_crs <- function(sfc, crs, proj4string ) {
-	crs <- list(
-		epsg = ifelse(is.null(crs),NA_integer_,crs)
-		, proj4string = ifelse(is.null(proj4string),"",proj4string)
-	)
-	attr( crs, "class" ) <- "crs"
-	attr( sfc, "crs" ) <- crs
+set_crs <- function(sfc, input, wkt, crs, proj4string ) {
+
+	if( !is.null( crs ) | !is.null( proj4string ) ) {
+		warning("crs and proj4string are deprecated. Please now use input and wkt")
+	}
+
+	if( !is.null( input ) & is.null( wkt ) ) {
+		stop("If supplying a custom input you must also supply wkt")
+	}
+
+	if( is.null( input ) & !is.null( wkt ) ) {
+		stop("If supplying a custom wkt you must also supply input")
+	}
+
+	if( !is.null( input ) ) {
+		crs <- attr( sfc, "crs" )
+		crs["input"] <- input
+		attr( sfc, "crs" ) <- crs
+	}
+
+	if( !is.null( wkt ) ) {
+		crs <- attr( sfc, "crs" )
+		crs["wkt"] <- wkt
+		attr( sfc, "crs" ) <- crs
+	}
+
 	return( sfc )
 }
 
@@ -228,6 +249,7 @@ handle_dates <- function( x ) {
 is_url <- function(geojson) grepl("^https?://", geojson, useBytes=TRUE)
 
 read_url <- function(con) {
+
 	out <- tryCatch({
 		paste0(readLines(con), collapse = "")
 	},
@@ -235,7 +257,7 @@ read_url <- function(con) {
 		stop("There was an error downloading the geojson")
 	},
 	finally = {
-		close(con)
+		  close(con)
 	})
 }
 

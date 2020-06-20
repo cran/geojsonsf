@@ -128,11 +128,6 @@ sf <- geojson_sf(js)
 head(sf)
 
 ## -----------------------------------------------------------------------------
-url <- "http://eric.clst.org/assets/wiki/uploads/Stuff/gz_2010_us_050_00_500k.json"
-sf <- geojson_sf(url)
-head(sf)
-
-## -----------------------------------------------------------------------------
 sf <- geojson_sf(system.file("examples", "geo_melbourne.geojson", package = "geojsonsf"))
 head(sf)
 

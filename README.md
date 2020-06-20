@@ -7,8 +7,8 @@ geojsonsf
 downloads](http://cranlogs.r-pkg.org/badges/geojsonsf)](https://CRAN.R-project.org/package=geojsonsf)
 [![Github
 Stars](https://img.shields.io/github/stars/SymbolixAU/geojsonsf.svg?style=social&label=Github)](https://github.com/SymbolixAU/geojsonsf)
-[![Build
-Status](https://travis-ci.org/SymbolixAU/geojsonsf.svg?branch=master)](https://travis-ci.org/SymbolixAU/geojsonsf)
+[![R build
+status](https://github.com/symbolixau/geojsonsf/workflows/R-CMD-check/badge.svg)](https://github.com/symbolixau/geojsonsf/actions)
 [![Coverage
 Status](https://codecov.io/github/SymbolixAU/geojsonsf/coverage.svg?branch=master)](https://codecov.io/github/SymbolixAU/geojsonsf?branch=master)
 
@@ -99,8 +99,9 @@ sf
 #  geometry type:  GEOMETRY
 #  dimension:      XY
 #  bbox:           xmin: -1 ymin: -1 xmax: 100 ymax: 1
-#  epsg (SRID):    4326
-#  proj4string:    +proj=longlat +datum=WGS84 +no_defs
+#  z_range:        zmin: NA zmax: NA
+#  m_range:        mmin: NA mmax: NA
+#  CRS:            4326
 #    id                geometry
 #  1 NA             POINT (0 0)
 #  2 NA LINESTRING (-1 -1, 1 1)
@@ -191,27 +192,3 @@ microbenchmark(
 # geojsonsf  709.2268  709.2268  722.0626  722.0626  734.8984  734.8984      2
 #        sf 1867.6840 1867.6840 1958.7968 1958.7968 2049.9097 2049.9097      2
 ```
-
-### Does it work?
-
-I’ve written a [lot of
-tests](https://github.com/SymbolixAU/geojsonsf/tree/master/tests/testthat)
-to try and capture all eventualities. But if you find a mistake please
-let me know.
-
-Here’s a quick visual check to see the output of the above benchmark
-data
-
-``` r
-library(googleway)
-set_key("GOOGLE_MAP_KEY")
-
-gsf <- geojson_sf(geo)
-
-google_map() %>%
-    add_polygons(gsf[!gsf$STATE %in% c("02","15","72"), ], 
-            fill_colour = "CENSUSAREA", 
-            stroke_weight = 0)
-```
-
-<img src="./man/figures/GeoJSONSF.png" width="100%" />

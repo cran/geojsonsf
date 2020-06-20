@@ -1,7 +1,4 @@
-context("geojsonsf")
-
-
-test_that("ints vs numerics read correctly", {
+##"ints vs numerics read correctly", {
 
 	## TODO Integers
 	# geo <- '{"type":"Point","coordinates":[0,0]}'
@@ -51,9 +48,7 @@ test_that("ints vs numerics read correctly", {
 	expect_equal( geojson_sf( mply )[[1]], geojson_sfc( mply ) )
 	expect_false( is.integer( geojson_sfc( mply )[[1]] ) )
 
-})
-
-test_that("the geoms I test in mapdeck work", {
+## "the geoms I test in mapdeck work", {
 
 	expect_silent( geojsonsf::geojson_sf('{"type":"Point","coordinates":[0,0]}') )
 	expect_silent( geojsonsf::geojson_sf('{"type":"MultiPoint","coordinates":[[0,0],[1,1]]}') )
@@ -63,5 +58,16 @@ test_that("the geoms I test in mapdeck work", {
 	expect_silent( geojsonsf::geojson_sf('{"type":"MultiPolygon","coordinates":[[[[0,0],[0,1],[1,1],[1,0],[0,0]],[[2,2],[2,3],[3,3],[3,2],[2,2]]]]}') )
 	expect_silent( geojsonsf::geojson_sf('{"type":"MultiPolygon","coordinates":[[[[0,0],[0,1],[1,1],[1,0],[0,0]],[[0,0],[0,-1],[-1,-1],[1,0],[0,0]]]]}') )
 
-})
+## issue 79
+##"NULLs coerced to correct type",{
+
+	gj <- '{"type":"FeatureCollection","features":[
+  {"type":"Feature","properties":{"a":1.0,"b":true,"c":"hello"},"geometry":{"type":"Point","coordinates":[0.0,0.0]}},
+  {"type":"Feature","properties":{"a":null,"b":null,"c":null},"geometry":{"type":"Point","coordinates":[1.0,1.0]}}
+]}'
+
+	sf <- geojson_sf(gj)
+	expect_true( is.numeric( sf$a ) )
+	expect_true( is.logical( sf$b ) )
+	expect_true( is.character( sf$c ) )
 
