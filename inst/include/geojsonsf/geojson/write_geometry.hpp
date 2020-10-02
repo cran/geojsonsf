@@ -5,9 +5,13 @@
 #include "geojsonsf/geojson/writers/writers.hpp"
 #include "geojsonsf/write_geojson.hpp"
 
+#include "geometries/utils/null/null.hpp"
+#include "geometries/utils/sexp/sexp.hpp"
+
 #include "sfheaders/sfheaders.hpp"
 #include "sfheaders/utils/utils.hpp"
-#include "sfheaders/utils/sexp/sexp.hpp"
+
+//#include "sfheaders/utils/sexp/sexp.hpp"
 
 namespace geojsonsf {
 namespace write_geometry {
@@ -35,7 +39,7 @@ namespace write_geometry {
 		std::string geom_type;
 		geom_type = cls[1];
 
-		int sfglength = sfheaders::utils::get_sexp_length( sfg );
+		int sfglength = geometries::utils::sexp_length( sfg );
 
 		if (sfglength == 0) {
 			writer.Null();
@@ -76,7 +80,7 @@ namespace write_geometry {
 		// need to keep track of GEOMETRYCOLLECTIONs so we can correctly close them
 		bool isGeometryCollection = (geom_type == "GEOMETRYCOLLECTION") ? true : false;
 
-		int sfglength = sfheaders::utils::get_sexp_length( sfg );
+		int sfglength = geometries::utils::sexp_length( sfg );
 
 		if (sfglength == 0) {
 			writer.Null();
@@ -126,7 +130,7 @@ namespace write_geometry {
 		// need to keep track of GEOMETRYCOLLECTIONs so we can correctly close them
 		bool isGeometryCollection = (geom_type == "GEOMETRYCOLLECTION") ? true : false;
 
-		int sfglength = sfheaders::utils::get_sexp_length( sfg );
+		int sfglength = geometries::utils::sexp_length( sfg );
 
 		if (sfglength == 0) {
 			writer.Null();
