@@ -1,7 +1,7 @@
-778ad8b43475c15b48cda6aad14b8721 *DESCRIPTION
+249d76f4c18bbe9bb163219a49b605dd *DESCRIPTION
 f5756d57eaab2e3d1bfd7c9dc67f8534 *LICENSE
 6cbc52fbe2521f37e1df5b732006f55f *NAMESPACE
-73bc7094fce23e374fee33e31226cb9f *NEWS.md
+c0a42aaffc2c5ea78f84b323128ac3a5 *NEWS.md
 d1ed9d605db9c3e585ed7c143e4d7ebd *R/RcppExports.R
 c8ad1466b12cfcb27eb77eec9fb0b29b *R/geojson_sf.R
 c20330984374762af6c654ff0abd01a9 *R/geojson_wkt.R
@@ -9,15 +9,15 @@ c20330984374762af6c654ff0abd01a9 *R/geojson_wkt.R
 d43087af7a0df98d39964d604f12fd51 *R/onAttach.R
 dcb159c1d3849d14357bbac9d7da0903 *R/sf_geojson.R
 6e8cd57c061a49d60a4b7677f08e0562 *README.md
-107e432357a72cfd0387d975ad43a744 *build/vignette.rds
+8d7cb73eb441129fd46a5decbe895751 *build/vignette.rds
 ea2433c8c29b554792c11a77656b90fb *data/geo_melbourne.rda
 7b377d5386d65232598cd798e5c27d45 *inst/doc/geojson-sf-conversions.R
 18a5b5fd083b80394ba714e5114b24b8 *inst/doc/geojson-sf-conversions.Rmd
-61a5b67bbe1e85b02460b6c012565b5b *inst/doc/geojson-sf-conversions.html
+648ba7307c7dedbca69beaa4de9b1f1d *inst/doc/geojson-sf-conversions.html
 04f982179b3a69e0afbe48abcd327888 *inst/examples/geo_melbourne.geojson
 89f52ba28ce2e1b855c6bb7ac2818365 *inst/include/geojsonsf/geojson/api/df_api.hpp
 bbca88d47e32cda44293864f5804333b *inst/include/geojsonsf/geojson/api/sf_api.hpp
-d6321a6441ecf1e95361015f362b1e39 *inst/include/geojsonsf/geojson/geojson_properties.hpp
+7e920563b604db56ce3d135836fd8761 *inst/include/geojsonsf/geojson/geojson_properties.hpp
 8324e5ce1c8414bf85534ceba1db731b *inst/include/geojsonsf/geojson/geojson_to_sf.hpp
 2ae2bc0df947948bb4ed6df58765b074 *inst/include/geojsonsf/geojson/geojson_validate.hpp
 0a5312b56ba8b869031766e3782dd549 *inst/include/geojsonsf/geojson/parse.hpp
@@ -43,7 +43,7 @@ fc90388f98e3f7a7826aab217d84b6de *inst/tinytest/test-downcast.R
 f1d0f869336d400f5f000751f4f6e6c8 *inst/tinytest/test-errors.R
 2609afbff25c8d4ecd9ebd94185f06bb *inst/tinytest/test-geojson_mix.R
 bba0cb019f6005979a8a94a708dd23c5 *inst/tinytest/test-geojson_properties.R
-b22225b668058d003eb489a249406838 *inst/tinytest/test-geojson_sf.R
+08ebf75a1299d9ebcbfe8fae719bd28e *inst/tinytest/test-geojson_sf.R
 6f28528fb268affb115c478090ee913e *inst/tinytest/test-geojson_sf_simplify.R
 640505affb014f89eba02684997f4ab2 *inst/tinytest/test-geojson_types.R
 e9d5d0a351b326a629fc3ff37b171797 *inst/tinytest/test-geojson_validate.R
@@ -71,7 +71,7 @@ f951249c6a31ccfbad794f4c6c2215e0 *man/geojson_wkt.Rd
 18148bded6d77f4048ce3fb9ef151bd2 *man/sfc_geojson.Rd
 0041a471f125130e1231dfd2686fab9e *src/Makevars
 0041a471f125130e1231dfd2686fab9e *src/Makevars.win
-fd27bf0f7a28590ba2f85f4c03975180 *src/RcppExports.cpp
+3394b33f05e4518bbf012c8fd0627d62 *src/RcppExports.cpp
 39d4840fc22dfc6145492ad3d34eacec *src/df_geojson.cpp
 57fd72d763b866e8b1cc3c9d5ed72d37 *src/geojson_to_sf.cpp
 71397decf7d65fdb525e426ff265a183 *src/geojson_to_wkt.cpp
