@@ -1,8 +1,8 @@
 Package: geojsonsf
 Type: Package
 Title: GeoJSON to Simple Feature Converter
-Version: 2.0.2
-Date: 2022-03-04
+Version: 2.0.3
+Date: 2022-05-31
 Authors@R: c(
     person("David", "Cooley", ,"dcooley@symbolix.com.au", role = c("aut", "cre"))
     )
@@ -21,8 +21,8 @@ RoxygenNote: 7.1.0
 Suggests: covr, jsonify, knitr, rmarkdown, tinytest
 VignetteBuilder: knitr
 NeedsCompilation: yes
-Packaged: 2022-03-03 22:08:43 UTC; david
+Packaged: 2022-05-30 22:52:38 UTC; david
 Author: David Cooley [aut, cre]
 Maintainer: David Cooley <dcooley@symbolix.com.au>
 Repository: CRAN
-Date/Publication: 2022-03-03 22:40:02 UTC
+Date/Publication: 2022-05-30 23:20:02 UTC

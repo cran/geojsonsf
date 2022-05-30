@@ -1,7 +1,7 @@
-249d76f4c18bbe9bb163219a49b605dd *DESCRIPTION
+2f07e697996c87c89f4eaf590f4eb1c2 *DESCRIPTION
 f5756d57eaab2e3d1bfd7c9dc67f8534 *LICENSE
 6cbc52fbe2521f37e1df5b732006f55f *NAMESPACE
-c0a42aaffc2c5ea78f84b323128ac3a5 *NEWS.md
+7d4c0598fb9fe106969dee622881e647 *NEWS.md
 d1ed9d605db9c3e585ed7c143e4d7ebd *R/RcppExports.R
 c8ad1466b12cfcb27eb77eec9fb0b29b *R/geojson_sf.R
 c20330984374762af6c654ff0abd01a9 *R/geojson_wkt.R
@@ -13,7 +13,7 @@ dcb159c1d3849d14357bbac9d7da0903 *R/sf_geojson.R
 ea2433c8c29b554792c11a77656b90fb *data/geo_melbourne.rda
 7b377d5386d65232598cd798e5c27d45 *inst/doc/geojson-sf-conversions.R
 18a5b5fd083b80394ba714e5114b24b8 *inst/doc/geojson-sf-conversions.Rmd
-648ba7307c7dedbca69beaa4de9b1f1d *inst/doc/geojson-sf-conversions.html
+75a29a13687325f9ccb7d4ece90a3ac4 *inst/doc/geojson-sf-conversions.html
 04f982179b3a69e0afbe48abcd327888 *inst/examples/geo_melbourne.geojson
 89f52ba28ce2e1b855c6bb7ac2818365 *inst/include/geojsonsf/geojson/api/df_api.hpp
 bbca88d47e32cda44293864f5804333b *inst/include/geojsonsf/geojson/api/sf_api.hpp
@@ -30,7 +30,7 @@ d9554d846e24f373c06742cd321f06df *inst/include/geojsonsf/geometrycollection/geom
 1d5ac6ca4f484e9352fb9c66d53bb06b *inst/include/geojsonsf/sf/sf/construct.hpp
 892752cc3e22446922896803346b09f0 *inst/include/geojsonsf/sf/sfc/geojson_sfc.hpp
 38eff08559c3174e84ae6102ce42cc6d *inst/include/geojsonsf/sf/sfc/utils/sfc_utils.hpp
-2c84a9e80f6ff828ab24c2046fcf2c91 *inst/include/geojsonsf/sf/sfg/geojson_sfg.hpp
+f87196888c57ca6df183d93934abfdfc *inst/include/geojsonsf/sf/sfg/geojson_sfg.hpp
 7587fc3a4eae678758ba6a67661dbbb2 *inst/include/geojsonsf/wkt/geojson_wkt.hpp
 f8b8bf91e00a0f21dad7b5c2730b0cf3 *inst/include/geojsonsf/write_geojson.hpp
 1a920871383f807371896788a8314673 *inst/tinytest/test-ZM.R
@@ -40,7 +40,7 @@ d387795b858f094651ed1f80ab1b2339 *inst/tinytest/test-df_geojson.R
 6c6a376f116d6b6e2f0a24c466bf9427 *inst/tinytest/test-digits.R
 fc90388f98e3f7a7826aab217d84b6de *inst/tinytest/test-downcast.R
 9304f53b9de73823f512271ac3799564 *inst/tinytest/test-empty_geometries.R
-f1d0f869336d400f5f000751f4f6e6c8 *inst/tinytest/test-errors.R
+eb950f68e1004bdd32e2198cb971d029 *inst/tinytest/test-errors.R
 2609afbff25c8d4ecd9ebd94185f06bb *inst/tinytest/test-geojson_mix.R
 bba0cb019f6005979a8a94a708dd23c5 *inst/tinytest/test-geojson_properties.R
 08ebf75a1299d9ebcbfe8fae719bd28e *inst/tinytest/test-geojson_sf.R
